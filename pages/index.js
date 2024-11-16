@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
 import * as THREE from '../public/js/lib/three.module.js';
@@ -8,6 +8,8 @@ import { HandControls } from '../src/js/HandControls';
 import { MediaPipeHands } from '../src/js/MediaPipeHands';
 
 const Home = () => {
+  const [webcamEnabled, setWebcamEnabled] = useState(false);
+
   useEffect(() => {
     const enableWebcamButton = document.getElementById("webcamButton");
     const videoElement = document.getElementById("inputVideo");
@@ -15,6 +17,7 @@ const Home = () => {
     const handleWebcamButtonClick = async (e) => {
       e.preventDefault();
       enableWebcamButton.remove();
+      setWebcamEnabled(true);
 
       const mediaPipeHands = new MediaPipeHands(videoElement, (landmarks) => {
         handControls.update(landmarks);
@@ -26,9 +29,13 @@ const Home = () => {
 
     ScenesManager.setup();
 
+    const cursorMat = new THREE.MeshNormalMaterial({
+      depthTest: false,
+      depthWrite: false,
+    });
     const cursor = new THREE.Mesh(
       new THREE.SphereGeometry(0.1, 32, 16),
-      new THREE.MeshNormalMaterial({ depthTest: false, depthWrite: false })
+      cursorMat
     );
     ScenesManager.scene.add(cursor);
 
@@ -76,13 +83,20 @@ const Home = () => {
     const pane = new Pane({ container: paneContainer });
     const PARAMS = {
       showLandmark: false,
+      webcamEnabled: false,
     };
     pane.addBinding(PARAMS, "showLandmark").on("change", (ev) => {
       handControls.show3DLandmark(ev.value);
     });
 
-    pane.addBinding(PARAMS, "showLandmark").on("change", (ev) => {
-      handControls.show3DLandmark(ev.value);
+    pane.addBinding(PARAMS, "webcamEnabled").on("change", (ev) => {
+      setWebcamEnabled(ev.value);
+      if (ev.value) {
+        enableWebcamButton.click();
+      } else {
+        videoElement.pause();
+        videoElement.srcObject = null;
+      }
     });
 
     handControls.addEventListener("drag_start", (event) => {

@@ -1,8 +1,9 @@
 import * as THREE from "../../public/js/lib/three.module.js";
+import { GLTFLoader } from "../../public/js/lib/GLTFLoader.js";
 
 // The HandControls class extends THREE.EventDispatcher to handle hand controls in a 3D scene.
 export class HandControls extends THREE.EventDispatcher {
-  constructor(target, objects, renderer, camera, scene, isDraggable = false) {
+  constructor(target, objects, renderer, camera, scene, isDraggable = false, modelPath = null) {
     super();
     this.target = target; // An Object3D to be used as cursor
     this.objects = objects; // An array of draggable objects
@@ -32,6 +33,19 @@ export class HandControls extends THREE.EventDispatcher {
       to: new THREE.Vector3(),
       rotation: new THREE.Quaternion(),
     };
+
+    if (modelPath) {
+      this.loadModel(modelPath);
+    }
+  }
+
+  // Load 3D model as cursor
+  loadModel(modelPath) {
+    const loader = new GLTFLoader();
+    loader.load(modelPath, (gltf) => {
+      this.target = gltf.scene;
+      this.scene.add(this.target);
+    });
   }
 
   // Show or hide 3D landmarks

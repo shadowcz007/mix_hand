@@ -65,13 +65,15 @@ const Home = () => {
       objects.push(_object)
     }
 
+    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb';
     const handControls = new HandControls(
       cursor,
       objects,
       ScenesManager.renderer,
       ScenesManager.camera,
       ScenesManager.scene,
-      true
+      true,
+      modelPath
     )
 
     ScenesManager.renderer.setAnimationLoop(() => {

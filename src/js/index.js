@@ -1,5 +1,5 @@
-import * as THREE from "https://esm.sh/three";
-import { Pane } from "https://esm.sh/tweakpane";
+import * as THREE from "../../public/js/lib/three.module.js";
+import { Pane } from "../../public/js/lib/tweakpane.min.js";
 import { HandControls } from "./HandControls.js";
 import { MediaPipeHands } from "./MediaPipeHands.js";
 import { ScenesManager } from "./ScenesManager.js";
@@ -7,31 +7,37 @@ import { ScenesManager } from "./ScenesManager.js";
 // The App class initializes the application and sets up the scene, camera, and hand controls.
 export class App {
   constructor() {
-    this.pane = new Pane();
+    document.addEventListener("DOMContentLoaded", () => {
+      const paneContainer = document.getElementById('pane-container');
+      
+      this.pane = new Pane({ container: paneContainer });
+      console.log('Pane:', this.pane);
 
-    ScenesManager.setup();
+      ScenesManager.setup();
 
-    this.build();
+      this.build();
 
-    if (this.hasGetUserMedia()) {
-      const enableWebcamButton = document.getElementById("webcamButton");
-      enableWebcamButton.addEventListener("click", (e) => {
-        if (this.hasCamera) return;
-        e.preventDefault();
-        this.hasCamera = true;
+      if (this.hasGetUserMedia()) {
+        const enableWebcamButton = document.getElementById("webcamButton");
+        enableWebcamButton.addEventListener("click", (e) => {
+          console.log('click');
+          if (this.hasCamera) return;
+          e.preventDefault();
+          this.hasCamera = true;
 
-        const videoElement = document.getElementById("inputVideo");
-        this.mediaPiepeHands = new MediaPipeHands(videoElement, (landmarks) =>
-          this.onMediaPipeHandsResults(landmarks)
-        );
-        this.mediaPiepeHands.start();
-        enableWebcamButton.remove();
-      });
-    } else {
-      console.warn("getUserMedia() is not supported by your browser");
-    }
+          const videoElement = document.getElementById("inputVideo");
+          this.mediaPiepeHands = new MediaPipeHands(videoElement, (landmarks) =>
+            this.onMediaPipeHandsResults(landmarks)
+          );
+          this.mediaPiepeHands.start();
+          enableWebcamButton.remove();
+        });
+      } else {
+        console.warn("getUserMedia() is not supported by your browser");
+      }
 
-    ScenesManager.renderer.setAnimationLoop(() => this.animate());
+      ScenesManager.renderer.setAnimationLoop(() => this.animate());
+    });
   }
 
   // Check if the browser supports getUserMedia

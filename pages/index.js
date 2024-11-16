@@ -66,45 +66,8 @@ const Home = () => {
       true
     );
 
-    // Function to create text sprite
-    const createTextSprite = (text) => {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      context.font = '24px Arial';
-      context.fillStyle = 'rgba(255, 255, 255, 1.0)';
-      context.fillText(text, 0, 24);
-
-      const texture = new THREE.CanvasTexture(canvas);
-      const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-      const sprite = new THREE.Sprite(spriteMaterial);
-      sprite.scale.set(0.5, 0.25, 1.0);
-      return sprite;
-    };
-
-    // Create and add text sprites for each object
-    const textSprites = objects.map((obj) => {
-      const textSprite = createTextSprite(`(${obj.position.x.toFixed(2)}, ${obj.position.y.toFixed(2)}, ${obj.position.z.toFixed(2)})`);
-      textSprite.position.copy(obj.position);
-      ScenesManager.scene.add(textSprite);
-      return textSprite;
-    });
-
-    // Update text sprites positions and text
-    const updateTextSprites = () => {
-      textSprites.forEach((sprite, index) => {
-        const obj = objects[index];
-        sprite.position.copy(obj.position);
-        const canvas = sprite.material.map.image;
-        const context = canvas.getContext('2d');
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillText(`(${obj.position.x.toFixed(2)}, ${obj.position.y.toFixed(2)}, ${obj.position.z.toFixed(2)})`, 0, 24);
-        sprite.material.map.needsUpdate = true;
-      });
-    };
-
     ScenesManager.renderer.setAnimationLoop(() => {
       handControls.animate();
-      updateTextSprites();
       ScenesManager.render();
     });
 
@@ -123,6 +86,7 @@ const Home = () => {
       <div id="app"></div>
       <video id="inputVideo" playsInline autoPlay muted></video>
       <button id="webcamButton">CLICK TO ENABLE WEBCAM</button>
+      <div id="pane-container"></div>
       <Script src="/js/lib/camera_utils.js" strategy="beforeInteractive" />
       <Script src="/js/lib/hands.js" strategy="beforeInteractive" />
       <Script type="module" src="/js/lib/three.module.js" strategy="beforeInteractive" />

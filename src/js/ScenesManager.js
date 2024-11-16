@@ -7,7 +7,9 @@ import {
   DirectionalLight,
   SpotLight,
   Clock,
+  AxesHelper,
 } from "three";
+import { OrbitControls } from "../../public/js/lib/OrbitControls.js";
 
 // The ScenesManager class sets up and manages the 3D scene, camera, and renderer.
 export class ScenesManager {
@@ -15,6 +17,7 @@ export class ScenesManager {
   static camera;
   static renderer;
   static clock;
+  static controls;
 
   // Set up the scene, camera, and renderer
   static setup() {
@@ -55,12 +58,22 @@ export class ScenesManager {
     light.shadow.mapSize.height = 1024;
     ScenesManager.scene.add(light);
 
+    const axesHelper = new AxesHelper(5);
+    ScenesManager.scene.add(axesHelper);
+
+    ScenesManager.controls = new OrbitControls(ScenesManager.camera, ScenesManager.renderer.domElement);
+    ScenesManager.controls.enableDamping = true;
+    ScenesManager.controls.dampingFactor = 0.25;
+    ScenesManager.controls.screenSpacePanning = false;
+    ScenesManager.controls.maxPolarAngle = Math.PI / 2;
+
     ScenesManager.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(ScenesManager.renderer.domElement);
   }
 
   // Render the scene
   static render() {
+    ScenesManager.controls.update();
     ScenesManager.renderer.render(ScenesManager.scene, ScenesManager.camera);
   }
 }

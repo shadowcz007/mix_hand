@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
 import * as THREE from '../public/js/lib/three.module.js';
+import { Pane } from '../public/js/lib/tweakpane.min.js';
 import { ScenesManager } from '../src/js/ScenesManager';
 import { HandControls } from '../src/js/HandControls';
 import { MediaPipeHands } from '../src/js/MediaPipeHands';
@@ -69,6 +70,34 @@ const Home = () => {
     ScenesManager.renderer.setAnimationLoop(() => {
       handControls.animate();
       ScenesManager.render();
+    });
+
+    const paneContainer = document.getElementById('pane-container');
+    const pane = new Pane({ container: paneContainer });
+    const PARAMS = {
+      showLandmark: false,
+    };
+    pane.addBinding(PARAMS, "showLandmark").on("change", (ev) => {
+      handControls.show3DLandmark(ev.value);
+    });
+
+    pane.addBinding(PARAMS, "showLandmark").on("change", (ev) => {
+      handControls.show3DLandmark(ev.value);
+    });
+
+    handControls.addEventListener("drag_start", (event) => {
+      event.object.material.opacity = 0.4;
+    });
+    handControls.addEventListener("drag_end", (event) => {
+      if (event.object) event.object.material.opacity = 1;
+      event.callback();
+    });
+    handControls.addEventListener("collision", (event) => {
+      if (event.state === "on") {
+        cursorMat.opacity = 0.4;
+      } else {
+        cursorMat.opacity = 1;
+      }
     });
 
     return () => {

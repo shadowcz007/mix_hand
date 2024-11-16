@@ -7,20 +7,23 @@ import { ScenesManager } from "./ScenesManager.js";
 // The App class initializes the application and sets up the scene, camera, and hand controls.
 export class App {
   constructor() {
+    console.log('App constructor');
     document.addEventListener("DOMContentLoaded", () => {
+      console.log('DOMContentLoaded event');
       const paneContainer = document.getElementById('pane-container');
-      
+      console.log('Pane container:', paneContainer);
       this.pane = new Pane({ container: paneContainer });
       console.log('Pane:', this.pane);
 
       ScenesManager.setup();
+      console.log('ScenesManager setup complete');
 
       this.build();
+      console.log('Build complete');
 
       if (this.hasGetUserMedia()) {
         const enableWebcamButton = document.getElementById("webcamButton");
         enableWebcamButton.addEventListener("click", (e) => {
-          console.log('click');
           if (this.hasCamera) return;
           e.preventDefault();
           this.hasCamera = true;
@@ -54,6 +57,7 @@ export class App {
 
   // Build the scene with objects and hand controls
   async build() {
+    console.log('Building scene');
     const planeGeometry = new THREE.PlaneGeometry(100, 100);
     planeGeometry.rotateX(-Math.PI / 2);
     const planeMaterial = new THREE.ShadowMaterial({

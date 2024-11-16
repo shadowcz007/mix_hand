@@ -8,8 +8,12 @@ import {
   SpotLight,
   Clock,
   AxesHelper,
-} from "three";
+  Object3D
+}  from "../../public/js/lib/three.module.js";
+
+
 import { OrbitControls } from "../../public/js/lib/OrbitControls.js";
+import { HandControls } from "./HandControls.js"; // Import HandControls
 
 // The ScenesManager class sets up and manages the 3D scene, camera, and renderer.
 export class ScenesManager {
@@ -18,6 +22,7 @@ export class ScenesManager {
   static renderer;
   static clock;
   static controls;
+  static handControls; // Add handControls
 
   // Set up the scene, camera, and renderer
   static setup() {
@@ -69,11 +74,19 @@ export class ScenesManager {
 
     ScenesManager.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(ScenesManager.renderer.domElement);
+
+    // Instantiate HandControls
+    const target = new Object3D();
+    ScenesManager.scene.add(target);
+    const objects = []; // Add your draggable objects here
+    ScenesManager.handControls = new HandControls(target, objects, ScenesManager.renderer, ScenesManager.camera, ScenesManager.scene, true);
   }
 
   // Render the scene
   static render() {
     ScenesManager.controls.update();
+    ScenesManager.handControls.update(); // Update hand controls
+    ScenesManager.handControls.animate(); // Animate hand controls
     ScenesManager.renderer.render(ScenesManager.scene, ScenesManager.camera);
   }
 }

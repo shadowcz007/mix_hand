@@ -20,6 +20,9 @@ export class MediaPipeHands {
       width: this.isMobile() ? 720 : 1280,
       height: this.isMobile() ? 1280 : 720,
     });
+
+    // Do not start the camera automatically
+    this.cameraStarted = false;
   }
 
   // Check if the device is mobile based on window dimensions
@@ -29,6 +32,17 @@ export class MediaPipeHands {
 
   // Start the camera
   start() {
-    if (this.camera) this.camera.start();
+    if (this.camera && !this.cameraStarted) {
+      this.camera.start();
+      this.cameraStarted = true;
+    }
+  }
+
+  // Stop the camera
+  stop() {
+    if (this.camera && this.cameraStarted) {
+      this.camera.stop();
+      this.cameraStarted = false;
+    }
   }
 }

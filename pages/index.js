@@ -14,15 +14,16 @@ const Home = () => {
     const enableWebcamButton = document.getElementById('webcamButton')
     const videoElement = document.getElementById('inputVideo')
 
+    let mediaPipeHands
+
     const handleWebcamButtonClick = async e => {
       e.preventDefault()
       enableWebcamButton.remove()
       setWebcamEnabled(true)
 
-      const mediaPipeHands = new MediaPipeHands(videoElement, landmarks => {
+      mediaPipeHands = new MediaPipeHands(videoElement, landmarks => {
         handControls.update(landmarks)
       })
-      mediaPipeHands.start()
     }
 
     enableWebcamButton.addEventListener('click', handleWebcamButtonClick)
@@ -94,8 +95,15 @@ const Home = () => {
     pane.addBinding(PARAMS, 'webcamEnabled').on('change', ev => {
       setWebcamEnabled(ev.value)
       if (ev.value) {
-        enableWebcamButton.click()
+        if (mediaPipeHands) {
+          mediaPipeHands.start()
+        } else {
+          enableWebcamButton.click()
+        }
       } else {
+        if (mediaPipeHands) {
+          mediaPipeHands.stop()
+        }
         videoElement.pause()
         videoElement.srcObject = null
       }

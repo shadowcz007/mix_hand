@@ -1,6 +1,17 @@
 import * as THREE from '../../public/js/lib/three.module.js'
 import { GLTFLoader } from '../../public/js/lib/GLTFLoader.js'
 
+function throttle(func, wait) {
+  let lastTime = 0;
+  return function(...args) {
+      const now = new Date().getTime();
+      if (now - lastTime >= wait) {
+          lastTime = now;
+          func.apply(this, args);
+      }
+  };
+}
+
 // HandControls 类继承自 THREE.EventDispatcher，用于在 3D 场景中处理手部控制。
 export class HandControls extends THREE.EventDispatcher {
   constructor (
@@ -63,20 +74,6 @@ export class HandControls extends THREE.EventDispatcher {
       // 将平面添加到场景
       this.scene.add(this.palmPlane)
     }
-  }
-
-  updatePalmPlane (wrist, thumbTip, indexTip) {
-    // 计算两个向量
-    const v1 = new THREE.Vector3().subVectors(thumbTip, wrist)
-    const v2 = new THREE.Vector3().subVectors(indexTip, wrist)
-
-    // 计算法向量
-    const normal = new THREE.Vector3().crossVectors(v1, v2).normalize()
-
-    // 设置平面的位置和旋转
-    this.palmPlane.position.copy(wrist)
-    const target = wrist.clone().add(normal)
-    this.palmPlane.lookAt(target)
   }
 
   // 加载 3D 模型作为光标
@@ -155,106 +152,52 @@ export class HandControls extends THREE.EventDispatcher {
   // 根据检测到的手部位置更新手部地标
   update (landmarks) {
     if (landmarks && landmarks.multiHandLandmarks.length === 1) {
+      const getPosition = landmark => {
+        const position = new THREE.Vector3(
+          -landmark.x + 0.5,
+          -landmark.y + 0.5,
+          -landmark.z
+        )
+        position.multiplyScalar(4)
+        return position
+      }
+
       if (this.handsObj) {
         // 更新单个检测到的手部对象的位置
         for (let l = 0; l < 21; l++) {
-          this.handsObj.children[l].position.x =
-            -landmarks.multiHandLandmarks[0][l].x + 0.5
-          this.handsObj.children[l].position.y =
-            -landmarks.multiHandLandmarks[0][l].y + 0.5
-          this.handsObj.children[l].position.z =
-            -landmarks.multiHandLandmarks[0][l].z
-          this.handsObj.children[l].position.multiplyScalar(4)
+          const pos = getPosition(landmarks.multiHandLandmarks[0][l])
+          this.handsObj.children[l].position.copy(pos)
         }
 
         // 更新用于调试的手掌平面
         // this.palmPlane.position.copy(this.gestureCompute.from)
         // this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
-
-        // 手腕和五个指尖的坐标
-        // 手腕和五个指尖的坐标
-        const wrist = this.handsObj.children[0].position // 编号 0
-        const thumbTip = this.handsObj.children[4].position // 编号 4
-        const indexTip = this.handsObj.children[8].position // 编号 8
-        const middleTip = this.handsObj.children[12].position // 编号 12
-        const ringTip = this.handsObj.children[16].position // 编号 16
-        const pinkyTip = this.handsObj.children[20].position // 编号 20
-        this.updatePalmPlane(wrist, thumbTip, indexTip)
       }
-      // 控制手势的主要点
-      this.gestureCompute.depthFrom
-        .set(
-          -landmarks.multiHandLandmarks[0][0].x + 0.5,
-          -landmarks.multiHandLandmarks[0][0].y + 0.5,
-          -landmarks.multiHandLandmarks[0][0].z
-        )
-        .multiplyScalar(4)
-      this.gestureCompute.depthTo
-        .set(
-          -landmarks.multiHandLandmarks[0][10].x + 0.5,
-          -landmarks.multiHandLandmarks[0][10].y + 0.5,
-          -landmarks.multiHandLandmarks[0][10].z
-        )
-        .multiplyScalar(4)
-      this.gestureCompute.from
-        .set(
-          -landmarks.multiHandLandmarks[0][9].x + 0.5,
-          -landmarks.multiHandLandmarks[0][9].y + 0.5,
-          -landmarks.multiHandLandmarks[0][9].z
-        )
-        .multiplyScalar(4)
-      this.gestureCompute.to
-        .set(
-          -landmarks.multiHandLandmarks[0][12].x + 0.5,
-          -landmarks.multiHandLandmarks[0][12].y + 0.5,
-          -landmarks.multiHandLandmarks[0][12].z
-        )
-        .multiplyScalar(4)
+      
+      function isPinching (thumbTip, indexTip, threshold = 0.5) {
+        // 计算欧几里得距离
+        const distance = thumbTip.distanceTo(indexTip)
 
-      // 计算旋转四元数
-      const handDirection = new THREE.Vector3().subVectors(
-        this.gestureCompute.to,
-        this.gestureCompute.from
-      )
-      const handUp = new THREE.Vector3(0, 1, 0)
-      const handRight = new THREE.Vector3()
-        .crossVectors(handUp, handDirection)
-        .normalize()
-      handUp.crossVectors(handDirection, handRight).normalize()
-      const rotationMatrix = new THREE.Matrix4().makeBasis(
-        handRight,
-        handUp,
-        handDirection.normalize()
-      )
-      this.gestureCompute.rotation.setFromRotationMatrix(rotationMatrix)
+        // 如果距离小于阈值，返回 true
+        return distance < threshold
+      }
 
-      // 根据两点之间的距离检测握拳手势
-      const pointsDist = this.gestureCompute.from.distanceTo(
-        this.gestureCompute.to
-      )
-      this.closedFist = pointsDist < 0.35
+      // 假设你有拇指和食指的指尖位置
 
-      // 将地标的边缘点转换为笛卡尔点以进行深度计算
-      this.refObjFrom.position.copy(this.gestureCompute.depthFrom)
-      const depthA = this.to2D(this.refObjFrom)
-      this.depthPointA.set(depthA.x, depthA.y)
+      const thumbTip = getPosition(landmarks.multiHandLandmarks[0][4]) // 编号 4 拇指指尖
+      const indexTip = getPosition(landmarks.multiHandLandmarks[0][8]) // 编号 8 食指指尖
 
-      this.refObjTo.position.copy(this.gestureCompute.depthTo)
-      const depthB = this.to2D(this.refObjTo)
-      this.depthPointB.set(depthB.x, depthB.y)
+      if (isPinching(thumbTip, indexTip)) {
+        console.log('Pinching!')
+        this.closedFist = true
+      } else {
+        console.log('Not pinching.')
+        this.closedFist = false
+      }
 
-      const depthDistance = this.depthPointA.distanceTo(this.depthPointB)
-      this.depthZ = THREE.MathUtils.clamp(
-        THREE.MathUtils.mapLinear(depthDistance, 0, 1000, -3, 5),
-        -2,
-        4
-      )
-
-      this.target.position.set(
-        this.gestureCompute.from.x,
-        this.gestureCompute.from.y,
-        -this.depthZ
-      )
+      if (this.closedFist) {
+        this.target.position.set(thumbTip.x, thumbTip.y, -thumbTip.z)
+      }
 
       if (!this.closedFist) {
         this.dispatchEvent({

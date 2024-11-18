@@ -42,11 +42,29 @@ export class HandControls extends THREE.EventDispatcher {
       rotation: new THREE.Quaternion()
     }
 
+    // 创建一个用于调试手掌的平面
+    // this.createPalmPlane()
+
     if (modelPath) {
       this.loadModel(modelPath)
     }
 
-    this.pinchingTimeout = null
+    this.pinchingTimeout = null;
+  }
+
+  createPalmPlane () {
+    if (!this.palmPlane) {
+      // 创建一个平面
+      const planeGeometry = new THREE.PlaneGeometry(5, 5)
+      const planeMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        side: THREE.DoubleSide
+      })
+      this.palmPlane = new THREE.Mesh(planeGeometry, planeMaterial)
+
+      // 将平面添加到场景
+      this.scene.add(this.palmPlane)
+    }
   }
 
   // 加载 3D 模型作为光标
@@ -141,13 +159,14 @@ export class HandControls extends THREE.EventDispatcher {
           const pos = getPosition(landmarks.multiHandLandmarks[0][l])
           this.handsObj.children[l].position.copy(pos)
         }
-      }
 
+        // 更新用于调试的手掌平面
+        // this.palmPlane.position.copy(this.gestureCompute.from)
+        // this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
+      }
+      
       // 检查是否在捏合
-      this.checkPinching(
-        getPosition(landmarks.multiHandLandmarks[0][4]),
-        getPosition(landmarks.multiHandLandmarks[0][8])
-      )
+      this.checkPinching(getPosition(landmarks.multiHandLandmarks[0][4]), getPosition(landmarks.multiHandLandmarks[0][8]));
     }
   }
 
@@ -158,24 +177,24 @@ export class HandControls extends THREE.EventDispatcher {
 
     // 如果距离小于阈值，返回 true
     if (distance < threshold) {
+      console.log('Pinching!')
       this.closedFist = true
-      console.log(this.closedFist)
       if (this.pinchingTimeout) {
-        clearTimeout(this.pinchingTimeout)
-        this.pinchingTimeout = null
+        clearTimeout(this.pinchingTimeout);
+        this.pinchingTimeout = null;
       }
     } else {
+      console.log('Not pinching.')
       if (!this.pinchingTimeout) {
         this.pinchingTimeout = setTimeout(() => {
-          this.closedFist = false
-          console.log(this.closedFist)
-          this.pinchingTimeout = null
-        }, 2000)
+          this.closedFist = false;
+          this.pinchingTimeout = null;
+        }, 2000);
       }
     }
 
     if (this.closedFist) {
-      this.target.position.set(thumbTip.x, thumbTip.y, -thumbTip.z)
+      this.smoothTransitionToPosition(this.target.position, thumbTip);
     }
 
     if (!this.closedFist) {
@@ -196,6 +215,11 @@ export class HandControls extends THREE.EventDispatcher {
         type: 'opened_fist'
       })
     }
+  }
+
+  // 平滑过渡到目标位置
+  smoothTransitionToPosition(currentPosition, targetPosition, duration = 0.3) {
+    currentPosition.lerp(targetPosition, duration);
   }
 
   // 动画手部控制

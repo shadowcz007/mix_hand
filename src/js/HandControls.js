@@ -48,6 +48,9 @@ export class HandControls extends THREE.EventDispatcher {
 
     this.pinchingTimeout = null;
     this.pinchingStartTime = null;
+    this.previousThumbTipPosition = null; // 用于存储上一个拇指尖的位置
+    this.thumbTipDirectionStartTime = null; // 用于存储拇指尖移动方向的开始时间
+    this.currentDirection = null; // 用于存储当前的移动方向
   }
 
   // 加载 3D 模型作为光标
@@ -145,7 +148,58 @@ export class HandControls extends THREE.EventDispatcher {
       
       // 检查是否在捏合
       this.checkPinching(getPosition(landmarks.multiHandLandmarks[0][4]), getPosition(landmarks.multiHandLandmarks[0][8]));
+
+      // 检查拇指尖的移动方向
+      this.checkThumbTipDirection(getPosition(landmarks.multiHandLandmarks[0][4]));
     }
+  }
+
+  // 检查拇指尖的移动方向
+  checkThumbTipDirection (thumbTip) {
+    if (this.previousThumbTipPosition) {
+      const deltaX = thumbTip.x - this.previousThumbTipPosition.x;
+      const deltaY = thumbTip.y - this.previousThumbTipPosition.y;
+      let newDirection = null;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > 0) {
+          newDirection = 'right';
+        } else {
+          newDirection = 'left';
+        }
+      } else {
+        if (deltaY > 0) {
+          newDirection = 'up';
+        } else {
+          newDirection = 'down';
+        }
+      }
+
+      if (newDirection !== this.currentDirection) {
+        this.currentDirection = newDirection;
+        this.thumbTipDirectionStartTime = Date.now();
+      } else if (Date.now() - this.thumbTipDirectionStartTime > 200) {
+        switch (this.currentDirection) {
+          case 'right':
+            console.log(10);
+            this.target.rotation.y -= Math.PI / 8; // 向右旋转
+            break;
+          case 'left':
+            console.log(-10);
+            this.target.rotation.y += Math.PI / 8; // 向左旋转
+            break;
+          case 'up':
+            console.log(20);
+            this.target.rotation.x -= Math.PI / 8; // 向上旋转
+            break;
+          case 'down':
+            console.log(-20);
+            this.target.rotation.x += Math.PI / 8; // 向下旋转
+            break;
+        }
+      }
+    }
+    this.previousThumbTipPosition = thumbTip.clone();
   }
 
   // 检查是否在捏合
@@ -160,7 +214,7 @@ export class HandControls extends THREE.EventDispatcher {
         this.pinchingStartTime = Date.now();
       }
 
-      if (Date.now() - this.pinchingStartTime >= 1200) {
+      if (Date.now() - this.pinchingStartTime >= 200) {
         this.closedFist = true;
       }
 

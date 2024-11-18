@@ -46,13 +46,13 @@ export class HandControls extends THREE.EventDispatcher {
       this.loadModel(modelPath)
     }
 
-    this.pinchingTimeout = null;
-    this.pinchingStartTime = null;
-    this.previousThumbTipPosition = null; // 用于存储上一个拇指尖的位置
-    this.thumbTipDirectionStartTime = null; // 用于存储拇指尖移动方向的开始时间
-    this.currentDirection = null; // 用于存储当前的移动方向
-    this.initialTargetPosition = this.target.position.clone(); // 初始位置
-    this.initialTargetRotation = this.target.rotation.clone(); // 初始方向
+    this.pinchingTimeout = null
+    this.pinchingStartTime = null
+    this.previousThumbTipPosition = null // 用于存储上一个拇指尖的位置
+    this.thumbTipDirectionStartTime = null // 用于存储拇指尖移动方向的开始时间
+    this.currentDirection = null // 用于存储当前的移动方向
+    this.initialTargetPosition = this.target.position.clone() // 初始位置
+    this.initialTargetRotation = this.target.rotation.clone() // 初始方向
   }
 
   // 加载 3D 模型作为光标
@@ -61,8 +61,13 @@ export class HandControls extends THREE.EventDispatcher {
     loader.load(modelPath, gltf => {
       this.target = gltf.scene
       this.scene.add(this.target)
-      this.initialTargetPosition = this.target.position.clone(); // 更新初始位置
-      this.initialTargetRotation = this.target.rotation.clone(); // 更新初始方向
+      this.initialTargetPosition = this.target.position.clone() // 更新初始位置
+      this.initialTargetRotation = this.target.rotation.clone() // 更新初始方向
+      console.log(
+        'this.initialTargetPosition',
+        this.initialTargetPosition,
+        this.initialTargetRotation
+      )
     })
   }
 
@@ -149,57 +154,62 @@ export class HandControls extends THREE.EventDispatcher {
           this.handsObj.children[l].position.copy(pos)
         }
       }
-      
+
       // 检查是否在捏合
-      this.checkPinching(getPosition(landmarks.multiHandLandmarks[0][4]), getPosition(landmarks.multiHandLandmarks[0][8]));
+      this.checkPinching(
+        getPosition(landmarks.multiHandLandmarks[0][4]),
+        getPosition(landmarks.multiHandLandmarks[0][8])
+      )
 
       // 检查拇指尖的移动方向
-      this.checkThumbTipDirection(getPosition(landmarks.multiHandLandmarks[0][4]));
+      this.checkThumbTipDirection(
+        getPosition(landmarks.multiHandLandmarks[0][4])
+      )
     }
   }
 
   // 检查拇指尖的移动方向
   checkThumbTipDirection (thumbTip) {
     if (this.previousThumbTipPosition) {
-      const deltaX = thumbTip.x - this.previousThumbTipPosition.x;
-      const deltaY = thumbTip.y - this.previousThumbTipPosition.y;
-      let newDirection = null;
+      const deltaX = thumbTip.x - this.previousThumbTipPosition.x
+      const deltaY = thumbTip.y - this.previousThumbTipPosition.y
+      let newDirection = null
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         if (deltaX > 0) {
-          newDirection = 'right';
+          newDirection = 'right'
         } else {
-          newDirection = 'left';
+          newDirection = 'left'
         }
       } else {
         if (deltaY > 0) {
-          newDirection = 'up';
+          newDirection = 'up'
         } else {
-          newDirection = 'down';
+          newDirection = 'down'
         }
       }
 
       if (newDirection !== this.currentDirection) {
-        this.currentDirection = newDirection;
-        this.thumbTipDirectionStartTime = Date.now();
+        this.currentDirection = newDirection
+        this.thumbTipDirectionStartTime = Date.now()
       } else if (Date.now() - this.thumbTipDirectionStartTime > 200) {
         switch (this.currentDirection) {
-          case 'right': 
-            this.target.rotation.y += Math.PI / 22; // 向右旋转
-            break;
-          case 'left': 
-            this.target.rotation.y -= Math.PI / 22; // 向左旋转
-            break;
-          case 'up': 
-            this.target.rotation.x -= Math.PI / 22; // 向上旋转
-            break;
-          case 'down': 
-            this.target.rotation.x += Math.PI / 22; // 向下旋转
-            break;
+          case 'right':
+            this.target.rotation.y += Math.PI / 22 // 向右旋转
+            break
+          case 'left':
+            this.target.rotation.y -= Math.PI / 22 // 向左旋转
+            break
+          case 'up':
+            this.target.rotation.x -= Math.PI / 22 // 向上旋转
+            break
+          case 'down':
+            this.target.rotation.x += Math.PI / 22 // 向下旋转
+            break
         }
       }
     }
-    this.previousThumbTipPosition = thumbTip.clone();
+    this.previousThumbTipPosition = thumbTip.clone()
   }
 
   // 检查是否在捏合
@@ -211,31 +221,32 @@ export class HandControls extends THREE.EventDispatcher {
     if (distance < threshold) {
       console.log('Pinching!')
       if (!this.pinchingStartTime) {
-        this.pinchingStartTime = Date.now();
+        this.pinchingStartTime = Date.now()
       }
 
       if (Date.now() - this.pinchingStartTime >= 200) {
-        this.closedFist = true;
+        this.closedFist = true
+        this.toInit = false
       }
 
       if (this.pinchingTimeout) {
-        clearTimeout(this.pinchingTimeout);
-        this.pinchingTimeout = null;
+        clearTimeout(this.pinchingTimeout)
+        this.pinchingTimeout = null
       }
     } else {
       console.log('Not pinching.')
-      this.pinchingStartTime = null;
+      this.pinchingStartTime = null
       if (!this.pinchingTimeout) {
         this.pinchingTimeout = setTimeout(() => {
-          this.closedFist = false;
-          this.pinchingTimeout = null;
-          this.smoothTransitionToInitialPosition(); // 恢复到初始位置和方向
-        }, 2000);
+          this.closedFist = false
+          this.pinchingTimeout = null
+          this.toInit = true
+        }, 2000)
       }
     }
 
     if (this.closedFist) {
-      this.smoothTransitionToPosition(this.target.position, thumbTip);
+      this.smoothTransitionToPosition(this.target.position, thumbTip)
     }
 
     if (!this.closedFist) {
@@ -259,22 +270,73 @@ export class HandControls extends THREE.EventDispatcher {
   }
 
   // 平滑过渡到目标位置
-  smoothTransitionToPosition(currentPosition, targetPosition, duration = 0.3) {
-    currentPosition.lerp(targetPosition, duration);
+  smoothTransitionToPosition (currentPosition, targetPosition, duration = 0.3) {
+    currentPosition.lerp(targetPosition, duration)
   }
 
   // 平滑过渡到初始位置和方向
-  smoothTransitionToInitialPosition(duration = 0.6) {
-    this.target.position.lerp(this.initialTargetPosition, duration);
-    this.target.rotation.x = THREE.MathUtils.lerp(this.target.rotation.x, this.initialTargetRotation.x, duration);
-    this.target.rotation.y = THREE.MathUtils.lerp(this.target.rotation.y, this.initialTargetRotation.y, duration);
-    this.target.rotation.z = THREE.MathUtils.lerp(this.target.rotation.z, this.initialTargetRotation.z, duration);
+  smoothTransitionToInitialPosition (speed = 0.02, tolerance = 0.001) {
+    // 判断目标是否已经恢复到初始位置和旋转
+    const hasReachedInitialPositionAndRotation = () => {
+      // 计算位置的差异
+      const positionDelta = this.initialTargetPosition
+        .clone()
+        .sub(this.target.position)
+      const positionReached = positionDelta.length() < tolerance
+
+      // 计算旋转的差异
+      const rotationDeltaX = Math.abs(
+        this.target.rotation.x - this.initialTargetRotation.x
+      )
+      const rotationDeltaY = Math.abs(
+        this.target.rotation.y - this.initialTargetRotation.y
+      )
+      const rotationDeltaZ = Math.abs(
+        this.target.rotation.z - this.initialTargetRotation.z
+      )
+      const rotationReached =
+        rotationDeltaX < tolerance &&
+        rotationDeltaY < tolerance &&
+        rotationDeltaZ < tolerance
+
+      // 如果位置和旋转都在容差范围内，则认为已经恢复到初始值
+      return positionReached && rotationReached
+    }
+
+    // 如果已经恢复到初始位置和旋转，则不再进行变换
+    if (hasReachedInitialPositionAndRotation()) {
+      return (this.toInit = false)
+    }
+
+    // 计算位置的差异并进行插值
+    const positionDelta = this.initialTargetPosition
+      .clone()
+      .sub(this.target.position)
+      .multiplyScalar(speed)
+    this.target.position.add(positionDelta)
+
+    // 计算旋转的插值
+    this.target.rotation.x = THREE.MathUtils.lerp(
+      this.target.rotation.x,
+      this.initialTargetRotation.x,
+      speed
+    )
+    this.target.rotation.y = THREE.MathUtils.lerp(
+      this.target.rotation.y,
+      this.initialTargetRotation.y,
+      speed
+    )
+    this.target.rotation.z = THREE.MathUtils.lerp(
+      this.target.rotation.z,
+      this.initialTargetRotation.z,
+      speed
+    )
   }
 
   // 动画手部控制
   animate () {
     if (!this.target) return
-
+    if (this.toInit) this.smoothTransitionToInitialPosition() // 恢复到初始位置和方向
     this.targetBox3.setFromObject(this.target)
     this.objects.forEach(obj => {
       this.objectBox3.setFromObject(obj)

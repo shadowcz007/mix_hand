@@ -95,7 +95,10 @@ const Home = () => {
       rotationZ: 0,
       positionX: 0,
       positionY: 0,
-      positionZ: 0
+      positionZ: 0,
+      resetPositionAndRotation: () => {
+        handControlsRef.current.smoothTransitionToInitialPosition();
+      }
     }
     pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
       handControlsRef.current.show3DLandmark(ev.value)
@@ -137,6 +140,10 @@ const Home = () => {
     pane.addBinding(PARAMS, 'positionZ', { min: -5, max: 5 }).on('change', ev => {
       setPosition(prev => ({ ...prev, z: ev.value }))
     })
+
+    pane.addButton({ title: 'Reset Position and Rotation' }).on('click', () => {
+      PARAMS.resetPositionAndRotation();
+    });
 
     handControlsRef.current.addEventListener('drag_start', event => {
       event.object.material.opacity = 0.4

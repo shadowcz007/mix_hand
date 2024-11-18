@@ -72,11 +72,13 @@ export class HandControls extends THREE.EventDispatcher {
     if (!this.handsObj) {
       this.handsObj = new THREE.Object3D()
       this.scene.add(this.handsObj)
-
+      this.handsObjMats = []
       this.createHand()
     }
 
-    this.sphereMat.opacity = value ? 1 : 0
+    for (const sphereMat of this.handsObjMats) {
+      sphereMat.opacity = value ? 1 : 0
+    }
   }
 
   // 从极坐标转换为笛卡尔坐标 - 来自 THREE.js CSSRenderer 的函数
@@ -101,17 +103,20 @@ export class HandControls extends THREE.EventDispatcher {
   }
 
   // 创建手部地标
+
   createHand () {
-    this.sphereMat = new THREE.MeshNormalMaterial({
-      transparent: true,
-      opacity: this.showLandmark ? 1 : 0
-    })
     const sphereGeo = new THREE.SphereGeometry(0.025, 8, 4)
-    const sphereMesh = new THREE.Mesh(sphereGeo, this.sphereMat)
     for (let i = 0; i < 21; i++) {
-      const sphereMeshClone = sphereMesh.clone()
-      sphereMeshClone.renderOrder = 2
-      this.handsObj.add(sphereMeshClone)
+      const color = new THREE.Color(Math.random(), Math.random(), Math.random()) // 生成随机颜色
+      const sphereMat = new THREE.MeshStandardMaterial({
+        color: color,
+        transparent: true,
+        opacity: 1
+      })
+      this.handsObjMats.push(sphereMat)
+      const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat)
+      sphereMesh.renderOrder = 2
+      this.handsObj.add(sphereMesh)
     }
   }
 

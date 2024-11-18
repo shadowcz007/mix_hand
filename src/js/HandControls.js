@@ -43,19 +43,40 @@ export class HandControls extends THREE.EventDispatcher {
     }
 
     // 创建一个用于调试手掌的平面
-    this.palmPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.2, 0.2),
-      new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        side: THREE.DoubleSide,
-        wireframe: true
-      })
-    )
-    this.scene.add(this.palmPlane)
+    this.createPalmPlane()
 
     if (modelPath) {
       this.loadModel(modelPath)
     }
+  }
+
+  createPalmPlane () {
+    if (!this.palmPlane) {
+      // 创建一个平面
+      const planeGeometry = new THREE.PlaneGeometry(5, 5)
+      const planeMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        side: THREE.DoubleSide
+      })
+      this.palmPlane = new THREE.Mesh(planeGeometry, planeMaterial)
+
+      // 将平面添加到场景
+      this.scene.add(this.palmPlane)
+    }
+  }
+
+  updatePalmPlane (wrist, thumbTip, indexTip) {
+    // 计算两个向量
+    const v1 = new THREE.Vector3().subVectors(thumbTip, wrist)
+    const v2 = new THREE.Vector3().subVectors(indexTip, wrist)
+
+    // 计算法向量
+    const normal = new THREE.Vector3().crossVectors(v1, v2).normalize()
+
+    // 设置平面的位置和旋转
+    this.palmPlane.position.copy(wrist)
+    const target = wrist.clone().add(normal)
+    this.palmPlane.lookAt(target)
   }
 
   // 加载 3D 模型作为光标
@@ -107,7 +128,18 @@ export class HandControls extends THREE.EventDispatcher {
   createHand () {
     const sphereGeo = new THREE.SphereGeometry(0.025, 8, 4)
     for (let i = 0; i < 21; i++) {
-      const color = new THREE.Color(Math.random(), Math.random(), Math.random()) // 生成随机颜色
+      let r = [0, 10, 9, 12].includes(i)
+        ? [255, 0, 0]
+        : [Math.random(), Math.random(), Math.random()]
+      if (i == 0) {
+        r = [0, 255, 0]
+        // 0 绿色，手掌根部
+      }
+      if (i == 12) {
+        r = [0, 0, 255] //中指指尖
+      }
+
+      const color = new THREE.Color(...r) // 生成随机颜色
       const sphereMat = new THREE.MeshStandardMaterial({
         color: color,
         transparent: true,
@@ -134,6 +166,20 @@ export class HandControls extends THREE.EventDispatcher {
             -landmarks.multiHandLandmarks[0][l].z
           this.handsObj.children[l].position.multiplyScalar(4)
         }
+
+        // 更新用于调试的手掌平面
+        // this.palmPlane.position.copy(this.gestureCompute.from)
+        // this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
+
+        // 手腕和五个指尖的坐标
+        // 手腕和五个指尖的坐标
+        const wrist = this.handsObj.children[0].position // 编号 0
+        const thumbTip = this.handsObj.children[4].position // 编号 4
+        const indexTip = this.handsObj.children[8].position // 编号 8
+        const middleTip = this.handsObj.children[12].position // 编号 12
+        const ringTip = this.handsObj.children[16].position // 编号 16
+        const pinkyTip = this.handsObj.children[20].position // 编号 20
+        this.updatePalmPlane(wrist, thumbTip, indexTip)
       }
       // 控制手势的主要点
       this.gestureCompute.depthFrom
@@ -181,10 +227,6 @@ export class HandControls extends THREE.EventDispatcher {
         handDirection.normalize()
       )
       this.gestureCompute.rotation.setFromRotationMatrix(rotationMatrix)
-
-      // 更新用于调试的手掌平面
-      this.palmPlane.position.copy(this.gestureCompute.from)
-      this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
 
       // 根据两点之间的距离检测握拳手势
       const pointsDist = this.gestureCompute.from.distanceTo(

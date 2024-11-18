@@ -1,17 +1,6 @@
 import * as THREE from '../../public/js/lib/three.module.js'
 import { GLTFLoader } from '../../public/js/lib/GLTFLoader.js'
 
-function throttle(func, wait) {
-  let lastTime = 0;
-  return function(...args) {
-      const now = new Date().getTime();
-      if (now - lastTime >= wait) {
-          lastTime = now;
-          func.apply(this, args);
-      }
-  };
-}
-
 // HandControls 类继承自 THREE.EventDispatcher，用于在 3D 场景中处理手部控制。
 export class HandControls extends THREE.EventDispatcher {
   constructor (
@@ -53,27 +42,11 @@ export class HandControls extends THREE.EventDispatcher {
       rotation: new THREE.Quaternion()
     }
 
-    // 创建一个用于调试手掌的平面
-    this.createPalmPlane()
-
     if (modelPath) {
       this.loadModel(modelPath)
     }
-  }
 
-  createPalmPlane () {
-    if (!this.palmPlane) {
-      // 创建一个平面
-      const planeGeometry = new THREE.PlaneGeometry(5, 5)
-      const planeMaterial = new THREE.MeshBasicMaterial({
-        color: 0x00ff00,
-        side: THREE.DoubleSide
-      })
-      this.palmPlane = new THREE.Mesh(planeGeometry, planeMaterial)
-
-      // 将平面添加到场景
-      this.scene.add(this.palmPlane)
-    }
+    this.pinchingTimeout = null
   }
 
   // 加载 3D 模型作为光标
@@ -168,55 +141,60 @@ export class HandControls extends THREE.EventDispatcher {
           const pos = getPosition(landmarks.multiHandLandmarks[0][l])
           this.handsObj.children[l].position.copy(pos)
         }
-
-        // 更新用于调试的手掌平面
-        // this.palmPlane.position.copy(this.gestureCompute.from)
-        // this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
-      }
-      
-      function isPinching (thumbTip, indexTip, threshold = 0.5) {
-        // 计算欧几里得距离
-        const distance = thumbTip.distanceTo(indexTip)
-
-        // 如果距离小于阈值，返回 true
-        return distance < threshold
       }
 
-      // 假设你有拇指和食指的指尖位置
+      // 检查是否在捏合
+      this.checkPinching(
+        getPosition(landmarks.multiHandLandmarks[0][4]),
+        getPosition(landmarks.multiHandLandmarks[0][8])
+      )
+    }
+  }
 
-      const thumbTip = getPosition(landmarks.multiHandLandmarks[0][4]) // 编号 4 拇指指尖
-      const indexTip = getPosition(landmarks.multiHandLandmarks[0][8]) // 编号 8 食指指尖
+  // 检查是否在捏合
+  checkPinching (thumbTip, indexTip, threshold = 0.5) {
+    // 计算欧几里得距离
+    const distance = thumbTip.distanceTo(indexTip)
 
-      if (isPinching(thumbTip, indexTip)) {
-        console.log('Pinching!')
-        this.closedFist = true
-      } else {
-        console.log('Not pinching.')
-        this.closedFist = false
+    // 如果距离小于阈值，返回 true
+    if (distance < threshold) {
+      this.closedFist = true
+      console.log(this.closedFist)
+      if (this.pinchingTimeout) {
+        clearTimeout(this.pinchingTimeout)
+        this.pinchingTimeout = null
       }
-
-      if (this.closedFist) {
-        this.target.position.set(thumbTip.x, thumbTip.y, -thumbTip.z)
+    } else {
+      if (!this.pinchingTimeout) {
+        this.pinchingTimeout = setTimeout(() => {
+          this.closedFist = false
+          console.log(this.closedFist)
+          this.pinchingTimeout = null
+        }, 2000)
       }
+    }
 
-      if (!this.closedFist) {
-        this.dispatchEvent({
-          type: 'closed_fist'
-        })
+    if (this.closedFist) {
+      this.target.position.set(thumbTip.x, thumbTip.y, -thumbTip.z)
+    }
 
-        this.dispatchEvent({
-          type: 'drag_end',
-          object: this.selected,
-          callback: () => {
-            this.selected = null
-          }
-        })
-      } else {
-        this.selected = null
-        this.dispatchEvent({
-          type: 'opened_fist'
-        })
-      }
+    if (!this.closedFist) {
+      this.dispatchEvent({
+        type: 'closed_fist'
+      })
+
+      this.dispatchEvent({
+        type: 'drag_end',
+        object: this.selected,
+        callback: () => {
+          this.selected = null
+        }
+      })
+    } else {
+      this.selected = null
+      this.dispatchEvent({
+        type: 'opened_fist'
+      })
     }
   }
 

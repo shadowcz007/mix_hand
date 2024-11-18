@@ -1,7 +1,7 @@
 import * as THREE from '../../public/js/lib/three.module.js'
 import { GLTFLoader } from '../../public/js/lib/GLTFLoader.js'
 
-// The HandControls class extends THREE.EventDispatcher to handle hand controls in a 3D scene.
+// HandControls 类继承自 THREE.EventDispatcher，用于在 3D 场景中处理手部控制。
 export class HandControls extends THREE.EventDispatcher {
   constructor (
     target,
@@ -13,9 +13,9 @@ export class HandControls extends THREE.EventDispatcher {
     modelPath = null
   ) {
     super()
-    this.target = target // An Object3D to be used as cursor
-    this.objects = objects // An array of draggable objects
-    this.isDraggable = isDraggable // A boolean to determine if the element must be draggable after hit
+    this.target = target // 用作光标的 Object3D
+    this.objects = objects // 可拖动对象的数组
+    this.isDraggable = isDraggable // 布尔值，确定元素在命中后是否可拖动
     this.renderer = renderer
     this.camera = camera
     this.scene = scene
@@ -42,7 +42,7 @@ export class HandControls extends THREE.EventDispatcher {
       rotation: new THREE.Quaternion()
     }
 
-    // Create a plane for debugging the palm
+    // 创建一个用于调试手掌的平面
     this.palmPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(0.2, 0.2),
       new THREE.MeshBasicMaterial({
@@ -58,7 +58,7 @@ export class HandControls extends THREE.EventDispatcher {
     }
   }
 
-  // Load 3D model as cursor
+  // 加载 3D 模型作为光标
   loadModel (modelPath) {
     const loader = new GLTFLoader()
     loader.load(modelPath, gltf => {
@@ -67,7 +67,7 @@ export class HandControls extends THREE.EventDispatcher {
     })
   }
 
-  // Show or hide 3D landmarks
+  // 显示或隐藏 3D 地标
   show3DLandmark (value) {
     if (!this.handsObj) {
       this.handsObj = new THREE.Object3D()
@@ -79,10 +79,10 @@ export class HandControls extends THREE.EventDispatcher {
     this.sphereMat.opacity = value ? 1 : 0
   }
 
-  // Conversion from Polar to Cartesian - Function from THREE.js CSSRenderer
+  // 从极坐标转换为笛卡尔坐标 - 来自 THREE.js CSSRenderer 的函数
   to2D (object) {
     if (!this.renderer) {
-      console.error('A valid renderer must be used.')
+      console.error('必须使用有效的渲染器。')
       return
     }
     const rect = this.renderer.domElement.getBoundingClientRect()
@@ -100,7 +100,7 @@ export class HandControls extends THREE.EventDispatcher {
     }
   }
 
-  // Create hand landmarks
+  // 创建手部地标
   createHand () {
     this.sphereMat = new THREE.MeshNormalMaterial({
       transparent: true,
@@ -115,11 +115,11 @@ export class HandControls extends THREE.EventDispatcher {
     }
   }
 
-  // Update hand landmarks based on detected hand positions
+  // 根据检测到的手部位置更新手部地标
   update (landmarks) {
     if (landmarks && landmarks.multiHandLandmarks.length === 1) {
       if (this.handsObj) {
-        // Update the position of the objects for the single detected hand
+        // 更新单个检测到的手部对象的位置
         for (let l = 0; l < 21; l++) {
           this.handsObj.children[l].position.x =
             -landmarks.multiHandLandmarks[0][l].x + 0.5
@@ -130,7 +130,7 @@ export class HandControls extends THREE.EventDispatcher {
           this.handsObj.children[l].position.multiplyScalar(4)
         }
       }
-      // Main points to control gestures
+      // 控制手势的主要点
       this.gestureCompute.depthFrom
         .set(
           -landmarks.multiHandLandmarks[0][0].x + 0.5,
@@ -160,7 +160,7 @@ export class HandControls extends THREE.EventDispatcher {
         )
         .multiplyScalar(4)
 
-      // Calculate rotation quaternion
+      // 计算旋转四元数
       const handDirection = new THREE.Vector3().subVectors(
         this.gestureCompute.to,
         this.gestureCompute.from
@@ -177,17 +177,17 @@ export class HandControls extends THREE.EventDispatcher {
       )
       this.gestureCompute.rotation.setFromRotationMatrix(rotationMatrix)
 
-      // Update the palm plane for debugging
+      // 更新用于调试的手掌平面
       this.palmPlane.position.copy(this.gestureCompute.from)
       this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
 
-      // Detect closed fist gesture based on distance between two points
+      // 根据两点之间的距离检测握拳手势
       const pointsDist = this.gestureCompute.from.distanceTo(
         this.gestureCompute.to
       )
       this.closedFist = pointsDist < 0.35
 
-      // Convert edge points from landmark to cartesian points for depth calculation
+      // 将地标的边缘点转换为笛卡尔点以进行深度计算
       this.refObjFrom.position.copy(this.gestureCompute.depthFrom)
       const depthA = this.to2D(this.refObjFrom)
       this.depthPointA.set(depthA.x, depthA.y)
@@ -230,7 +230,7 @@ export class HandControls extends THREE.EventDispatcher {
     }
   }
 
-  // Animate the hand controls
+  // 动画手部控制
   animate () {
     if (!this.target) return
 
@@ -264,7 +264,7 @@ export class HandControls extends THREE.EventDispatcher {
         }
       }
     })
-    // If closedFist is true, the object will follow the target (cursor)
+    // 如果 closedFist 为 true，则对象将跟随目标（光标）
     if (this.selected && this.closedFist && this.isDraggable) {
       this.selected.position.lerp(this.target.position, 0.3)
       this.selected.quaternion.slerp(this.gestureCompute.rotation, 0.3)

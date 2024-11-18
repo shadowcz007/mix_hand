@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Head from 'next/head'
 import Script from 'next/script'
 import * as THREE from '../public/js/lib/three.module.js'
@@ -10,11 +10,14 @@ import { MediaPipeHands } from '../src/js/MediaPipeHands'
 const Home = () => {
   const [webcamEnabled, setWebcamEnabled] = useState(false)
   const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 })
-  let mediaPipeHands, handControls
+  const [position, setPosition] = useState({ x: 0, y: 0, z: 0 })
+  const handControlsRef = useRef(null)
 
   useEffect(() => {
     const enableWebcamButton = document.getElementById('webcamButton')
     const videoElement = document.getElementById('inputVideo')
+
+    let mediaPipeHands
 
     const handleWebcamButtonClick = async e => {
       e.preventDefault()
@@ -22,7 +25,7 @@ const Home = () => {
       setWebcamEnabled(true)
 
       mediaPipeHands = new MediaPipeHands(videoElement, landmarks => {
-        handControls.update(landmarks)
+        handControlsRef.current.update(landmarks)
       })
     }
 
@@ -66,8 +69,8 @@ const Home = () => {
       objects.push(_object)
     }
 
-    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb'
-    handControls = new HandControls(
+    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb';
+    handControlsRef.current = new HandControls(
       cursor,
       objects,
       ScenesManager.renderer,
@@ -78,7 +81,7 @@ const Home = () => {
     )
 
     ScenesManager.renderer.setAnimationLoop(() => {
-      handControls.animate()
+      handControlsRef.current.animate()
       ScenesManager.render()
     })
 
@@ -89,10 +92,13 @@ const Home = () => {
       webcamEnabled,
       rotationX: 0,
       rotationY: 0,
-      rotationZ: 0
+      rotationZ: 0,
+      positionX: 0,
+      positionY: 0,
+      positionZ: 0
     }
     pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
-      handControls.show3DLandmark(ev.value)
+      handControlsRef.current.show3DLandmark(ev.value)
     })
 
     pane.addBinding(PARAMS, 'webcamEnabled').on('change', ev => {
@@ -112,30 +118,34 @@ const Home = () => {
       }
     })
 
-    pane
-      .addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI })
-      .on('change', ev => {
-        setRotation(prev => ({ ...prev, x: ev.value }))
-      })
-    pane
-      .addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI })
-      .on('change', ev => {
-        setRotation(prev => ({ ...prev, y: ev.value }))
-      })
-    pane
-      .addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI })
-      .on('change', ev => {
-        setRotation(prev => ({ ...prev, z: ev.value }))
-      })
+    pane.addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI }).on('change', ev => {
+      setRotation(prev => ({ ...prev, x: ev.value }))
+    })
+    pane.addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI }).on('change', ev => {
+      setRotation(prev => ({ ...prev, y: ev.value }))
+    })
+    pane.addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI }).on('change', ev => {
+      setRotation(prev => ({ ...prev, z: ev.value }))
+    })
 
-    handControls.addEventListener('drag_start', event => {
+    pane.addBinding(PARAMS, 'positionX', { min: -5, max: 5 }).on('change', ev => {
+      setPosition(prev => ({ ...prev, x: ev.value }))
+    })
+    pane.addBinding(PARAMS, 'positionY', { min: -5, max: 5 }).on('change', ev => {
+      setPosition(prev => ({ ...prev, y: ev.value }))
+    })
+    pane.addBinding(PARAMS, 'positionZ', { min: -5, max: 5 }).on('change', ev => {
+      setPosition(prev => ({ ...prev, z: ev.value }))
+    })
+
+    handControlsRef.current.addEventListener('drag_start', event => {
       event.object.material.opacity = 0.4
     })
-    handControls.addEventListener('drag_end', event => {
+    handControlsRef.current.addEventListener('drag_end', event => {
       if (event.object) event.object.material.opacity = 1
       event.callback()
     })
-    handControls.addEventListener('collision', event => {
+    handControlsRef.current.addEventListener('collision', event => {
       if (event.state === 'on') {
         cursorMat.opacity = 0.4
       } else {
@@ -149,10 +159,12 @@ const Home = () => {
   }, [])
 
   useEffect(() => {
-    if (handControls) {
-      handControls.target.rotation.set(rotation.x, rotation.y, rotation.z)
+    console.log('###change', position, rotation, handControlsRef.current)
+    if (handControlsRef.current) {
+      handControlsRef.current.target.rotation.set(rotation.x, rotation.y, rotation.z)
+      handControlsRef.current.target.position.set(position.x, position.y, position.z)
     }
-  }, [rotation])
+  }, [rotation, position])
 
   return (
     <>

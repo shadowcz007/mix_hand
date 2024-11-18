@@ -9,12 +9,12 @@ import { MediaPipeHands } from '../src/js/MediaPipeHands'
 
 const Home = () => {
   const [webcamEnabled, setWebcamEnabled] = useState(false)
+  const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 })
+  let mediaPipeHands, handControls
 
   useEffect(() => {
     const enableWebcamButton = document.getElementById('webcamButton')
     const videoElement = document.getElementById('inputVideo')
-
-    let mediaPipeHands
 
     const handleWebcamButtonClick = async e => {
       e.preventDefault()
@@ -66,8 +66,8 @@ const Home = () => {
       objects.push(_object)
     }
 
-    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb';
-    const handControls = new HandControls(
+    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb'
+    handControls = new HandControls(
       cursor,
       objects,
       ScenesManager.renderer,
@@ -86,7 +86,10 @@ const Home = () => {
     const pane = new Pane({ container: paneContainer })
     const PARAMS = {
       showLandmark: false,
-      webcamEnabled
+      webcamEnabled,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0
     }
     pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
       handControls.show3DLandmark(ev.value)
@@ -109,6 +112,22 @@ const Home = () => {
       }
     })
 
+    pane
+      .addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI })
+      .on('change', ev => {
+        setRotation(prev => ({ ...prev, x: ev.value }))
+      })
+    pane
+      .addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI })
+      .on('change', ev => {
+        setRotation(prev => ({ ...prev, y: ev.value }))
+      })
+    pane
+      .addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI })
+      .on('change', ev => {
+        setRotation(prev => ({ ...prev, z: ev.value }))
+      })
+
     handControls.addEventListener('drag_start', event => {
       event.object.material.opacity = 0.4
     })
@@ -128,6 +147,12 @@ const Home = () => {
       enableWebcamButton.removeEventListener('click', handleWebcamButtonClick)
     }
   }, [])
+
+  useEffect(() => {
+    if (handControls) {
+      handControls.target.rotation.set(rotation.x, rotation.y, rotation.z)
+    }
+  }, [rotation])
 
   return (
     <>

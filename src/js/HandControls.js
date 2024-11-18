@@ -137,6 +137,7 @@ export class HandControls extends THREE.EventDispatcher {
   // 根据检测到的手部位置更新手部地标
   update (landmarks) {
     if (landmarks && landmarks.multiHandLandmarks.length === 1) {
+      console.log('landmarks')
       const getPosition = landmark => {
         const position = new THREE.Vector3(
           -landmark.x + 0.5,
@@ -165,6 +166,8 @@ export class HandControls extends THREE.EventDispatcher {
       this.checkThumbTipDirection(
         getPosition(landmarks.multiHandLandmarks[0][4])
       )
+    } else {
+      this.notPinching()
     }
   }
 
@@ -212,6 +215,34 @@ export class HandControls extends THREE.EventDispatcher {
     this.previousThumbTipPosition = thumbTip.clone()
   }
 
+  pinching () {
+    console.log('Pinching!')
+    if (!this.pinchingStartTime) {
+      this.pinchingStartTime = Date.now()
+    }
+
+    if (Date.now() - this.pinchingStartTime >= 200) {
+      this.closedFist = true
+      this.toInit = false
+    }
+
+    if (this.pinchingTimeout) {
+      clearTimeout(this.pinchingTimeout)
+      this.pinchingTimeout = null
+    }
+  }
+  notPinching () {
+    console.log('Not pinching.')
+    this.pinchingStartTime = null
+    if (!this.pinchingTimeout) {
+      this.pinchingTimeout = setTimeout(() => {
+        this.closedFist = false
+        this.pinchingTimeout = null
+        this.toInit = true
+      }, 2000)
+    }
+  }
+
   // 检查是否在捏合
   checkPinching (thumbTip, indexTip, threshold = 0.5) {
     // 计算欧几里得距离
@@ -219,30 +250,9 @@ export class HandControls extends THREE.EventDispatcher {
 
     // 如果距离小于阈值，返回 true
     if (distance < threshold) {
-      console.log('Pinching!')
-      if (!this.pinchingStartTime) {
-        this.pinchingStartTime = Date.now()
-      }
-
-      if (Date.now() - this.pinchingStartTime >= 200) {
-        this.closedFist = true
-        this.toInit = false
-      }
-
-      if (this.pinchingTimeout) {
-        clearTimeout(this.pinchingTimeout)
-        this.pinchingTimeout = null
-      }
+      this.pinching()
     } else {
-      console.log('Not pinching.')
-      this.pinchingStartTime = null
-      if (!this.pinchingTimeout) {
-        this.pinchingTimeout = setTimeout(() => {
-          this.closedFist = false
-          this.pinchingTimeout = null
-          this.toInit = true
-        }, 2000)
-      }
+      this.notPinching()
     }
 
     if (this.closedFist) {

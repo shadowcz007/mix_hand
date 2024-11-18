@@ -51,6 +51,8 @@ export class HandControls extends THREE.EventDispatcher {
     this.previousThumbTipPosition = null; // 用于存储上一个拇指尖的位置
     this.thumbTipDirectionStartTime = null; // 用于存储拇指尖移动方向的开始时间
     this.currentDirection = null; // 用于存储当前的移动方向
+    this.initialTargetPosition = this.target.position.clone(); // 初始位置
+    this.initialTargetRotation = this.target.rotation.clone(); // 初始方向
   }
 
   // 加载 3D 模型作为光标
@@ -59,6 +61,8 @@ export class HandControls extends THREE.EventDispatcher {
     loader.load(modelPath, gltf => {
       this.target = gltf.scene
       this.scene.add(this.target)
+      this.initialTargetPosition = this.target.position.clone(); // 更新初始位置
+      this.initialTargetRotation = this.target.rotation.clone(); // 更新初始方向
     })
   }
 
@@ -180,21 +184,17 @@ export class HandControls extends THREE.EventDispatcher {
         this.thumbTipDirectionStartTime = Date.now();
       } else if (Date.now() - this.thumbTipDirectionStartTime > 200) {
         switch (this.currentDirection) {
-          case 'right':
-            console.log(10);
-            this.target.rotation.y -= Math.PI / 8; // 向右旋转
+          case 'right': 
+            this.target.rotation.y += Math.PI / 22; // 向右旋转
             break;
-          case 'left':
-            console.log(-10);
-            this.target.rotation.y += Math.PI / 8; // 向左旋转
+          case 'left': 
+            this.target.rotation.y -= Math.PI / 22; // 向左旋转
             break;
-          case 'up':
-            console.log(20);
-            this.target.rotation.x -= Math.PI / 8; // 向上旋转
+          case 'up': 
+            this.target.rotation.x -= Math.PI / 22; // 向上旋转
             break;
-          case 'down':
-            console.log(-20);
-            this.target.rotation.x += Math.PI / 8; // 向下旋转
+          case 'down': 
+            this.target.rotation.x += Math.PI / 22; // 向下旋转
             break;
         }
       }
@@ -229,6 +229,7 @@ export class HandControls extends THREE.EventDispatcher {
         this.pinchingTimeout = setTimeout(() => {
           this.closedFist = false;
           this.pinchingTimeout = null;
+          this.smoothTransitionToInitialPosition(); // 恢复到初始位置和方向
         }, 2000);
       }
     }
@@ -260,6 +261,14 @@ export class HandControls extends THREE.EventDispatcher {
   // 平滑过渡到目标位置
   smoothTransitionToPosition(currentPosition, targetPosition, duration = 0.3) {
     currentPosition.lerp(targetPosition, duration);
+  }
+
+  // 平滑过渡到初始位置和方向
+  smoothTransitionToInitialPosition(duration = 0.6) {
+    this.target.position.lerp(this.initialTargetPosition, duration);
+    this.target.rotation.x = THREE.MathUtils.lerp(this.target.rotation.x, this.initialTargetRotation.x, duration);
+    this.target.rotation.y = THREE.MathUtils.lerp(this.target.rotation.y, this.initialTargetRotation.y, duration);
+    this.target.rotation.z = THREE.MathUtils.lerp(this.target.rotation.z, this.initialTargetRotation.z, duration);
   }
 
   // 动画手部控制

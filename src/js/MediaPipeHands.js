@@ -17,8 +17,8 @@ export class MediaPipeHands {
       async onFrame() {
         await hands.send({ image: videoElement });
       },
-      width: this.isMobile() ? 720 : 1280,
-      height: this.isMobile() ? 1280 : 720,
+      width: 1920,
+      height: 1080,
     });
 
     // Do not start the camera automatically

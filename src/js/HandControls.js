@@ -42,29 +42,12 @@ export class HandControls extends THREE.EventDispatcher {
       rotation: new THREE.Quaternion()
     }
 
-    // 创建一个用于调试手掌的平面
-    // this.createPalmPlane()
-
     if (modelPath) {
       this.loadModel(modelPath)
     }
 
     this.pinchingTimeout = null;
-  }
-
-  createPalmPlane () {
-    if (!this.palmPlane) {
-      // 创建一个平面
-      const planeGeometry = new THREE.PlaneGeometry(5, 5)
-      const planeMaterial = new THREE.MeshBasicMaterial({
-        color: 0x00ff00,
-        side: THREE.DoubleSide
-      })
-      this.palmPlane = new THREE.Mesh(planeGeometry, planeMaterial)
-
-      // 将平面添加到场景
-      this.scene.add(this.palmPlane)
-    }
+    this.pinchingStartTime = null;
   }
 
   // 加载 3D 模型作为光标
@@ -112,7 +95,6 @@ export class HandControls extends THREE.EventDispatcher {
   }
 
   // 创建手部地标
-
   createHand () {
     const sphereGeo = new THREE.SphereGeometry(0.025, 8, 4)
     for (let i = 0; i < 21; i++) {
@@ -159,10 +141,6 @@ export class HandControls extends THREE.EventDispatcher {
           const pos = getPosition(landmarks.multiHandLandmarks[0][l])
           this.handsObj.children[l].position.copy(pos)
         }
-
-        // 更新用于调试的手掌平面
-        // this.palmPlane.position.copy(this.gestureCompute.from)
-        // this.palmPlane.quaternion.copy(this.gestureCompute.rotation)
       }
       
       // 检查是否在捏合
@@ -178,13 +156,21 @@ export class HandControls extends THREE.EventDispatcher {
     // 如果距离小于阈值，返回 true
     if (distance < threshold) {
       console.log('Pinching!')
-      this.closedFist = true
+      if (!this.pinchingStartTime) {
+        this.pinchingStartTime = Date.now();
+      }
+
+      if (Date.now() - this.pinchingStartTime >= 1200) {
+        this.closedFist = true;
+      }
+
       if (this.pinchingTimeout) {
         clearTimeout(this.pinchingTimeout);
         this.pinchingTimeout = null;
       }
     } else {
       console.log('Not pinching.')
+      this.pinchingStartTime = null;
       if (!this.pinchingTimeout) {
         this.pinchingTimeout = setTimeout(() => {
           this.closedFist = false;

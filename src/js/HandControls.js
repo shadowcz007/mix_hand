@@ -239,7 +239,7 @@ export class HandControls extends THREE.EventDispatcher {
         this.closedFist = false
         this.pinchingTimeout = null
         this.toInit = true
-      }, 2000)
+      }, 1200)
     }
   }
 
@@ -285,7 +285,7 @@ export class HandControls extends THREE.EventDispatcher {
   }
 
   // 平滑过渡到初始位置和方向
-  smoothTransitionToInitialPosition (speed = 0.02, tolerance = 0.001) {
+  smoothTransitionToInitialPosition (speed = 0.03, tolerance = 0.001) {
     // 判断目标是否已经恢复到初始位置和旋转
     const hasReachedInitialPositionAndRotation = () => {
       // 计算位置的差异
@@ -382,5 +382,7 @@ export class HandControls extends THREE.EventDispatcher {
       this.selected.position.lerp(this.target.position, 0.3)
       this.selected.quaternion.slerp(this.gestureCompute.rotation, 0.3)
     }
+    return this.closedFist
   }
+
 }

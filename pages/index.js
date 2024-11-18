@@ -49,25 +49,25 @@ const Home = () => {
       geometry,
       new THREE.MeshNormalMaterial({ transparent: true })
     )
-    for (let i = 0; i < 5; i++) {
-      const mat = new THREE.MeshNormalMaterial({ transparent: true })
-      const _object = object.clone()
-      _object.material = mat
+    // for (let i = 0; i < 5; i++) {
+    //   const mat = new THREE.MeshNormalMaterial({ transparent: true })
+    //   const _object = object.clone()
+    //   _object.material = mat
 
-      _object.position.x = Math.random() * 2 - 1
-      _object.position.y = Math.random() * 0.5 - 0.25
-      _object.position.z = Math.random() * 2 - 1
+    //   _object.position.x = Math.random() * 2 - 1
+    //   _object.position.y = Math.random() * 0.5 - 0.25
+    //   _object.position.z = Math.random() * 2 - 1
 
-      _object.rotation.x = Math.random() * 2 * Math.PI
-      _object.rotation.y = Math.random() * 2 * Math.PI
-      _object.rotation.z = Math.random() * 2 * Math.PI
+    //   _object.rotation.x = Math.random() * 2 * Math.PI
+    //   _object.rotation.y = Math.random() * 2 * Math.PI
+    //   _object.rotation.z = Math.random() * 2 * Math.PI
 
-      _object.castShadow = true
-      _object.receiveShadow = true
+    //   _object.castShadow = true
+    //   _object.receiveShadow = true
 
-      ScenesManager.scene.add(_object)
-      objects.push(_object)
-    }
+    //   ScenesManager.scene.add(_object)
+    //   objects.push(_object)
+    // }
 
     const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb';
     handControlsRef.current = new HandControls(
@@ -81,8 +81,8 @@ const Home = () => {
     )
 
     ScenesManager.renderer.setAnimationLoop(() => {
-      handControlsRef.current.animate()
-      ScenesManager.render()
+      const closedFist=handControlsRef.current.animate()
+      ScenesManager.render(closedFist)
     })
 
     const paneContainer = document.getElementById('pane-container')

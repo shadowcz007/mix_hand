@@ -12,181 +12,207 @@ const Home = () => {
   const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 })
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0 })
   const handControlsRef = useRef(null)
+  const canvasRef = useRef(null)
 
   useEffect(() => {
-    const enableWebcamButton = document.getElementById('webcamButton')
-    const videoElement = document.getElementById('inputVideo')
-    const screenPoint = document.getElementById('screenPoint')
+    if (typeof window !== 'undefined') {
+      const enableWebcamButton = document.getElementById('webcamButton')
+      const videoElement = document.getElementById('inputVideo')
+      const screenPoint = document.getElementById('screenPoint')
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
 
-    let mediaPipeHands
+      // Set canvas dimensions
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
 
-    const handleWebcamButtonClick = async e => {
-      e.preventDefault()
-      enableWebcamButton.remove()
-      setWebcamEnabled(true)
+      let mediaPipeHands
 
-      mediaPipeHands = new MediaPipeHands(videoElement, landmarks => {
-        handControlsRef.current.update(landmarks)
+      const handleWebcamButtonClick = async e => {
+        e.preventDefault()
+        enableWebcamButton.remove()
+        setWebcamEnabled(true)
+
+        mediaPipeHands = new MediaPipeHands(videoElement, landmarks => {
+          handControlsRef.current.update(landmarks)
+        })
+      }
+
+      enableWebcamButton.addEventListener('click', handleWebcamButtonClick)
+
+      ScenesManager.setup()
+
+      const cursorMat = new THREE.MeshNormalMaterial({
+        depthTest: false,
+        depthWrite: false
       })
-    }
+      const cursor = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 32, 16),
+        cursorMat
+      )
+      ScenesManager.scene.add(cursor)
 
-    enableWebcamButton.addEventListener('click', handleWebcamButtonClick)
+      const objects = []
+      const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15)
+      const object = new THREE.Mesh(
+        geometry,
+        new THREE.MeshNormalMaterial({ transparent: true })
+      )
 
-    ScenesManager.setup()
+      const modelPath =
+        '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb'
+      handControlsRef.current = new HandControls(
+        cursor,
+        objects,
+        ScenesManager.renderer,
+        ScenesManager.camera,
+        ScenesManager.scene,
+        true,
+        modelPath
+      )
 
-    const cursorMat = new THREE.MeshNormalMaterial({
-      depthTest: false,
-      depthWrite: false
-    })
-    const cursor = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1, 32, 16),
-      cursorMat
-    )
-    ScenesManager.scene.add(cursor)
-
-    const objects = []
-    const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15)
-    const object = new THREE.Mesh(
-      geometry,
-      new THREE.MeshNormalMaterial({ transparent: true })
-    )
-    // for (let i = 0; i < 5; i++) {
-    //   const mat = new THREE.MeshNormalMaterial({ transparent: true })
-    //   const _object = object.clone()
-    //   _object.material = mat
-
-    //   _object.position.x = Math.random() * 2 - 1
-    //   _object.position.y = Math.random() * 0.5 - 0.25
-    //   _object.position.z = Math.random() * 2 - 1
-
-    //   _object.rotation.x = Math.random() * 2 * Math.PI
-    //   _object.rotation.y = Math.random() * 2 * Math.PI
-    //   _object.rotation.z = Math.random() * 2 * Math.PI
-
-    //   _object.castShadow = true
-    //   _object.receiveShadow = true
-
-    //   ScenesManager.scene.add(_object)
-    //   objects.push(_object)
-    // }
-
-    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb'
-    handControlsRef.current = new HandControls(
-      cursor,
-      objects,
-      ScenesManager.renderer,
-      ScenesManager.camera,
-      ScenesManager.scene,
-      true,
-      modelPath
-    )
-
-    //每一帧动画的数据
-    ScenesManager.renderer.setAnimationLoop(() => {
-      const closedFist = handControlsRef.current.animate()
-      ScenesManager.render(closedFist)
-      const { position } = handControlsRef.current.getScreenPoint()
-      console.log('screenPoint2D:', handControlsRef.current.getScreenPoint())
-      if (position && position.x) {
-        screenPoint.style.left = position.x + 'px'
-        screenPoint.style.top = position.y + 'px'
+      const PARAMS = {
+        showLandmark: false,
+        webcamEnabled,
+        radius: 200,
+        rotationX: 0,
+        rotationY: 0,
+        rotationZ: 0,
+        positionX: 0,
+        positionY: 0,
+        positionZ: 0,
+        resetPositionAndRotation: () => {
+          handControlsRef.current.resetPositionAndRotation()
+        }
       }
-    })
 
-    const paneContainer = document.getElementById('pane-container')
-    const pane = new Pane({ container: paneContainer })
-    const PARAMS = {
-      showLandmark: false,
-      webcamEnabled,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      positionX: 0,
-      positionY: 0,
-      positionZ: 0,
-      resetPositionAndRotation: () => {
-        handControlsRef.current.resetPositionAndRotation()
+      // Draw the circular area
+      const centerX = window.innerWidth / 2
+      const centerY = window.innerHeight / 2
+
+      const drawCircle = radius => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
+        ctx.strokeStyle = 'red'
+        ctx.lineWidth = 2
+        ctx.stroke()
       }
-    }
-    pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
-      handControlsRef.current.show3DLandmark(ev.value)
-    })
 
-    pane.addBinding(PARAMS, 'webcamEnabled').on('change', ev => {
-      setWebcamEnabled(ev.value)
-      if (ev.value) {
-        if (mediaPipeHands) {
-          mediaPipeHands.start()
+      drawCircle(PARAMS.radius)
+
+      //每一帧动画的数据
+      ScenesManager.renderer.setAnimationLoop(() => {
+        const closedFist = handControlsRef.current.animate()
+        ScenesManager.render(closedFist)
+        const { position } = handControlsRef.current.getScreenPoint()
+        console.log('screenPoint2D:', handControlsRef.current.getScreenPoint())
+        if (position && position.x) {
+          screenPoint.style.left = position.x + 'px'
+          screenPoint.style.top = position.y + 'px'
+
+          // Check if the position is within the circle
+          const dx = position.x - centerX
+          const dy = position.y - centerY
+          if (dx * dx + dy * dy <= radius * radius) {
+            console.log('Hit the target!')
+          }
+        }
+      })
+
+      const paneContainer = document.getElementById('pane-container')
+      const pane = new Pane({ container: paneContainer })
+
+      pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
+        handControlsRef.current.show3DLandmark(ev.value)
+      })
+
+      pane.addBinding(PARAMS, 'webcamEnabled').on('change', ev => {
+        setWebcamEnabled(ev.value)
+        if (ev.value) {
+          if (mediaPipeHands) {
+            mediaPipeHands.start()
+          } else {
+            enableWebcamButton.click()
+          }
         } else {
-          enableWebcamButton.click()
+          if (mediaPipeHands) {
+            mediaPipeHands.stop()
+          }
+          videoElement.pause()
+          videoElement.srcObject = null
         }
-      } else {
-        if (mediaPipeHands) {
-          mediaPipeHands.stop()
+      })
+
+      pane
+        .addBinding(PARAMS, 'radius', {
+          min: 10,
+          max: Math.min(centerX, centerY)
+        })
+        .on('change', ev => {
+          drawCircle(ev.value)
+        })
+
+      pane
+        .addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI })
+        .on('change', ev => {
+          setRotation(prev => ({ ...prev, x: ev.value }))
+        })
+      pane
+        .addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI })
+        .on('change', ev => {
+          setRotation(prev => ({ ...prev, y: ev.value }))
+        })
+      pane
+        .addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI })
+        .on('change', ev => {
+          setRotation(prev => ({ ...prev, z: ev.value }))
+        })
+
+      pane
+        .addBinding(PARAMS, 'positionX', { min: -5, max: 5 })
+        .on('change', ev => {
+          setPosition(prev => ({ ...prev, x: ev.value }))
+        })
+      pane
+        .addBinding(PARAMS, 'positionY', { min: -5, max: 5 })
+        .on('change', ev => {
+          setPosition(prev => ({ ...prev, y: ev.value }))
+        })
+      pane
+        .addBinding(PARAMS, 'positionZ', { min: -5, max: 5 })
+        .on('change', ev => {
+          setPosition(prev => ({ ...prev, z: ev.value }))
+        })
+
+      pane
+        .addButton({ title: 'Reset Position and Rotation' })
+        .on('click', () => {
+          PARAMS.resetPositionAndRotation()
+        })
+
+      handControlsRef.current.addEventListener('drag_start', event => {
+        event.object.material.opacity = 0.4
+      })
+      handControlsRef.current.addEventListener('drag_end', event => {
+        if (event.object) event.object.material.opacity = 1
+        event.callback()
+      })
+      handControlsRef.current.addEventListener('collision', event => {
+        if (event.state === 'on') {
+          cursorMat.opacity = 0.4
+        } else {
+          cursorMat.opacity = 1
         }
-        videoElement.pause()
-        videoElement.srcObject = null
+      })
+
+      return () => {
+        enableWebcamButton.removeEventListener('click', handleWebcamButtonClick)
       }
-    })
-
-    pane
-      .addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI })
-      .on('change', ev => {
-        setRotation(prev => ({ ...prev, x: ev.value }))
-      })
-    pane
-      .addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI })
-      .on('change', ev => {
-        setRotation(prev => ({ ...prev, y: ev.value }))
-      })
-    pane
-      .addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI })
-      .on('change', ev => {
-        setRotation(prev => ({ ...prev, z: ev.value }))
-      })
-
-    pane
-      .addBinding(PARAMS, 'positionX', { min: -5, max: 5 })
-      .on('change', ev => {
-        setPosition(prev => ({ ...prev, x: ev.value }))
-      })
-    pane
-      .addBinding(PARAMS, 'positionY', { min: -5, max: 5 })
-      .on('change', ev => {
-        setPosition(prev => ({ ...prev, y: ev.value }))
-      })
-    pane
-      .addBinding(PARAMS, 'positionZ', { min: -5, max: 5 })
-      .on('change', ev => {
-        setPosition(prev => ({ ...prev, z: ev.value }))
-      })
-
-    pane.addButton({ title: 'Reset Position and Rotation' }).on('click', () => {
-      PARAMS.resetPositionAndRotation()
-    })
-
-    handControlsRef.current.addEventListener('drag_start', event => {
-      event.object.material.opacity = 0.4
-    })
-    handControlsRef.current.addEventListener('drag_end', event => {
-      if (event.object) event.object.material.opacity = 1
-      event.callback()
-    })
-    handControlsRef.current.addEventListener('collision', event => {
-      if (event.state === 'on') {
-        cursorMat.opacity = 0.4
-      } else {
-        cursorMat.opacity = 1
-      }
-    })
-
-    return () => {
-      enableWebcamButton.removeEventListener('click', handleWebcamButtonClick)
     }
   }, [])
 
   useEffect(() => {
-    // console.log('###change', position, rotation, handControlsRef.current)
     if (handControlsRef.current) {
       handControlsRef.current.target.rotation.set(
         rotation.x,
@@ -218,6 +244,10 @@ const Home = () => {
       <div id='screenPoint' style={{ position: 'fixed' }}>
         POINT
       </div>
+      <canvas
+        ref={canvasRef}
+        style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'none' }}
+      ></canvas>
       <Script src='/js/lib/camera_utils.js' strategy='beforeInteractive' />
       <Script src='/js/lib/hands.js' strategy='beforeInteractive' />
       <Script

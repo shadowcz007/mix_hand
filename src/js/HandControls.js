@@ -53,6 +53,11 @@ export class HandControls extends THREE.EventDispatcher {
     this.currentDirection = null // 用于存储当前的移动方向
     this.initialTargetPosition = this.target.position.clone() // 初始位置
     this.initialTargetRotation = this.target.rotation.clone() // 初始方向
+
+    this.hitTheTarget = false
+
+    this.handLandmarkX = 0.5
+    this.handLandmarkY = 0.5
   }
 
   // 加载 3D 模型作为光标
@@ -144,8 +149,8 @@ export class HandControls extends THREE.EventDispatcher {
       // console.log('landmarks')
       const getPosition = landmark => {
         const position = new THREE.Vector3(
-          -landmark.x + 0.5,
-          -landmark.y + 0.5,
+          -landmark.x + this.handLandmarkX,
+          -landmark.y + this.handLandmarkY,
           -landmark.z
         )
         position.multiplyScalar(4)
@@ -184,7 +189,7 @@ export class HandControls extends THREE.EventDispatcher {
 
   // 检查拇指尖的移动方向
   checkThumbTipDirection (thumbTip) {
-    if (this.previousThumbTipPosition && this.closedFist) {
+    if (this.previousThumbTipPosition && this.closedFist && this.hitTheTarget) {
       const deltaX = thumbTip.x - this.previousThumbTipPosition.x
       const deltaY = thumbTip.y - this.previousThumbTipPosition.y
       let newDirection = null
@@ -266,7 +271,7 @@ export class HandControls extends THREE.EventDispatcher {
       this.notPinching()
     }
 
-    if (this.closedFist && canMoved) {
+    if (this.closedFist && canMoved && this.hitTheTarget) {
       this.smoothTransitionToPosition(this.target.position, thumbTip)
     }
 

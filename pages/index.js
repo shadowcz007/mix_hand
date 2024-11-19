@@ -11,14 +11,20 @@ const Home = () => {
   const [webcamEnabled, setWebcamEnabled] = useState(false)
   const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 })
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0 })
+  const [paneVisible, setPaneVisible] = useState(true) // State for pane visibility
   const handControlsRef = useRef(null)
   const canvasRef = useRef(null)
+  const paneRef = useRef(null) // Ref for the pane
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const enableWebcamButton = document.getElementById('webcamButton')
       const videoElement = document.getElementById('inputVideo')
       const screenPoint = document.getElementById('screenPoint')
+      const showPane = document.getElementById('showPane')
+
+      showPane.style = `position:fixed;top:0;right:0;z-index:99`
+
       const canvas = canvasRef.current
       const ctx = canvas.getContext('2d')
 
@@ -75,6 +81,8 @@ const Home = () => {
         showLandmark: false,
         webcamEnabled,
         radius: 200,
+        handLandmarkX: 0.5,
+        handLandmarkY: 0.5,
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
@@ -106,7 +114,7 @@ const Home = () => {
         const closedFist = handControlsRef.current.animate()
         ScenesManager.render(closedFist)
         const { position } = handControlsRef.current.getScreenPoint()
-        console.log('screenPoint2D:', handControlsRef.current.getScreenPoint())
+        // console.log('screenPoint2D:', handControlsRef.current.getScreenPoint())
         if (position && position.x) {
           screenPoint.style.left = position.x + 'px'
           screenPoint.style.top = position.y + 'px'
@@ -114,14 +122,19 @@ const Home = () => {
           // Check if the position is within the circle
           const dx = position.x - centerX
           const dy = position.y - centerY
-          if (dx * dx + dy * dy <= radius * radius) {
-            console.log('Hit the target!')
+          if (dx * dx + dy * dy <= PARAMS.radius * PARAMS.radius) {
+            // console.log('Hit the target!')
+            handControlsRef.current.hitTheTarget = true
+          } else {
+            handControlsRef.current.hitTheTarget = false
+            handControlsRef.current.closedFist = false
           }
         }
       })
 
       const paneContainer = document.getElementById('pane-container')
       const pane = new Pane({ container: paneContainer })
+      paneRef.current = pane // Assign pane to ref
 
       pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
         handControlsRef.current.show3DLandmark(ev.value)
@@ -147,6 +160,33 @@ const Home = () => {
       pane
         .addBinding(PARAMS, 'radius', {
           min: 10,
+          max: Math.min(centerX, centerY)
+        })
+        .on('change', ev => {
+          drawCircle(ev.value)
+        })
+
+      pane
+        .addBinding(PARAMS, 'handLandmarkX', {
+          min: 0,
+          max: Math.min(centerX, centerY)
+        })
+        .on('change', ev => {
+          handControlsRef.current.handLandmarkX = ev.value
+        })
+
+      pane
+        .addBinding(PARAMS, 'handLandmarkY', {
+          min: 0,
+          max: Math.min(centerX, centerY)
+        })
+        .on('change', ev => {
+          handControlsRef.current.handLandmarkY = ev.value
+        })
+
+      pane
+        .addBinding(PARAMS, 'handLandmarkY', {
+          min: 0,
           max: Math.min(centerX, centerY)
         })
         .on('change', ev => {
@@ -227,6 +267,14 @@ const Home = () => {
     }
   }, [rotation, position])
 
+  // Toggle pane visibility
+  const togglePaneVisibility = () => {
+    if (paneRef.current) {
+      paneRef.current.hidden = !paneRef.current.hidden
+      setPaneVisible(!paneVisible)
+    }
+  }
+
   return (
     <>
       <Head>
@@ -240,6 +288,9 @@ const Home = () => {
       <div id='app'></div>
       <video id='inputVideo' playsInline autoPlay muted></video>
       <button id='webcamButton'>CLICK TO ENABLE WEBCAM</button>
+      <button onClick={togglePaneVisibility} id='showPane'>
+        {paneVisible ? 'Hide Pane' : 'Show Pane'}
+      </button>
       <div id='pane-container'></div>
       <div id='screenPoint' style={{ position: 'fixed' }}>
         POINT

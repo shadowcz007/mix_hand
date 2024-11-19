@@ -137,7 +137,7 @@ export class HandControls extends THREE.EventDispatcher {
   // 根据检测到的手部位置更新手部地标
   update (landmarks) {
     if (landmarks && landmarks.multiHandLandmarks.length === 1) {
-      console.log('landmarks')
+      // console.log('landmarks')
       const getPosition = landmark => {
         const position = new THREE.Vector3(
           -landmark.x + 0.5,
@@ -198,16 +198,16 @@ export class HandControls extends THREE.EventDispatcher {
       } else if (Date.now() - this.thumbTipDirectionStartTime > 200) {
         switch (this.currentDirection) {
           case 'right':
-            this.target.rotation.y += Math.PI / 22 // 向右旋转
+            this.target.rotation.y += Math.PI / 32 // 向右旋转
             break
           case 'left':
-            this.target.rotation.y -= Math.PI / 22 // 向左旋转
+            this.target.rotation.y -= Math.PI / 32 // 向左旋转
             break
           case 'up':
-            this.target.rotation.x -= Math.PI / 22 // 向上旋转
+            this.target.rotation.x -= Math.PI / 32 // 向上旋转
             break
           case 'down':
-            this.target.rotation.x += Math.PI / 22 // 向下旋转
+            this.target.rotation.x += Math.PI / 32 // 向下旋转
             break
         }
       }

@@ -49,7 +49,7 @@ export class HandControls extends THREE.EventDispatcher {
     this.pinchingTimeout = null
     this.pinchingStartTime = null
     this.previousThumbTipPosition = null // 用于存储上一个拇指尖的位置
-    this.thumbTipDirectionStartTime = null // 用于存储拇指尖移动方向的开始时间
+    this.directionStartTime = null // 用于存储拇指尖移动方向的开始时间
     this.currentDirection = null // 用于存储当前的移动方向
     this.initialTargetPosition = this.target.position.clone() // 初始位置
     this.initialTargetRotation = this.target.rotation.clone() // 初始方向
@@ -140,7 +140,7 @@ export class HandControls extends THREE.EventDispatcher {
   }
 
   getScreenPoint () {
-    return { pinching: this.closedFist, position: this.screenPoint2D }
+    return { pinching: this.PinchingStatus, position: this.screenPoint2D }
   }
 
   // 根据检测到的手部位置更新手部地标
@@ -170,9 +170,6 @@ export class HandControls extends THREE.EventDispatcher {
       // 检查是否在捏合
       this.checkPinching(thumbTip, indexTip)
 
-      // 检查拇指尖的移动方向
-      this.checkThumbTipDirection(thumbTip)
-
       // 计算拇指尖和食指尖的中点
       this.screenPoint3D = new THREE.Vector3()
         .addVectors(thumbTip, indexTip)
@@ -187,48 +184,34 @@ export class HandControls extends THREE.EventDispatcher {
     }
   }
 
-  // 检查拇指尖的移动方向
-  checkThumbTipDirection (thumbTip) {
-    if (this.previousThumbTipPosition && this.closedFist && this.hitTheTarget) {
-      const deltaX = thumbTip.x - this.previousThumbTipPosition.x
-      const deltaY = thumbTip.y - this.previousThumbTipPosition.y
-      let newDirection = null
-
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 0) {
-          newDirection = 'right'
-        } else {
-          newDirection = 'left'
-        }
-      } else {
-        if (deltaY > 0) {
-          newDirection = 'up'
-        } else {
-          newDirection = 'down'
-        }
-      }
-
+  // 检查 移动方向
+  checkDirection (newDirection) {
+    // 在圆圈范围内，即可控制旋转
+    if (this.hitTheTarget) {
       if (newDirection !== this.currentDirection) {
         this.currentDirection = newDirection
-        this.thumbTipDirectionStartTime = Date.now()
-      } else if (Date.now() - this.thumbTipDirectionStartTime > 200) {
+        this.directionStartTime = Date.now()
+      } else if (Date.now() - this.directionStartTime > 100) {
+        const elapsedTime = (Date.now() - this.directionStartTime) / 1000
+        const easing = t => t * t * (3 - 2 * t) // 使用缓动函数
+
         switch (this.currentDirection) {
           case 'right':
-            this.target.rotation.y += Math.PI / 32 // 向右旋转
+            if (this.target.rotation.y < 2) this.target.rotation.y += 0.01 // 向右旋转
             break
           case 'left':
-            this.target.rotation.y -= Math.PI / 32 // 向左旋转
+            if (this.target.rotation.y > -1) this.target.rotation.y -= 0.01 // 向左旋转
             break
           case 'up':
-            this.target.rotation.x -= Math.PI / 32 // 向上旋转
+            console.log('up', this.target.rotation.x)
+            if (this.target.rotation.x > -1) this.target.rotation.x -= 0.01 // 向上旋转
             break
           case 'down':
-            this.target.rotation.x += Math.PI / 32 // 向下旋转
+            if (this.target.rotation.x < 1) this.target.rotation.x += 0.01 // 向下旋转
             break
         }
       }
     }
-    this.previousThumbTipPosition = thumbTip.clone()
   }
 
   pinching () {
@@ -238,7 +221,7 @@ export class HandControls extends THREE.EventDispatcher {
     }
 
     if (Date.now() - this.pinchingStartTime >= 200) {
-      this.closedFist = true
+      this.PinchingStatus = true
       this.toInit = false
     }
 
@@ -252,7 +235,7 @@ export class HandControls extends THREE.EventDispatcher {
     this.pinchingStartTime = null
     if (!this.pinchingTimeout) {
       this.pinchingTimeout = setTimeout(() => {
-        this.closedFist = false
+        this.PinchingStatus = false
         this.pinchingTimeout = null
         this.toInit = true
       }, 1200)
@@ -271,11 +254,11 @@ export class HandControls extends THREE.EventDispatcher {
       this.notPinching()
     }
 
-    if (this.closedFist && canMoved && this.hitTheTarget) {
+    if (this.PinchingStatus && canMoved && this.hitTheTarget) {
       this.smoothTransitionToPosition(this.target.position, thumbTip)
     }
 
-    if (!this.closedFist) {
+    if (!this.PinchingStatus) {
       this.dispatchEvent({
         type: 'closed_fist'
       })
@@ -373,7 +356,7 @@ export class HandControls extends THREE.EventDispatcher {
       const targetCollision = this.targetBox3.intersectsBox(this.objectBox3)
       if (targetCollision) {
         obj.userData.hasCollision = true
-        if (this.closedFist && !this.selected && this.isDraggable) {
+        if (this.PinchingStatus && !this.selected && this.isDraggable) {
           this.selected = obj
           this.dispatchEvent({
             type: 'drag_start',
@@ -398,10 +381,10 @@ export class HandControls extends THREE.EventDispatcher {
       }
     })
     // 如果 closedFist 为 true，则对象将跟随目标（光标）
-    if (this.selected && this.closedFist && this.isDraggable) {
+    if (this.selected && this.PinchingStatus && this.isDraggable) {
       this.selected.position.lerp(this.target.position, 0.3)
       this.selected.quaternion.slerp(this.gestureCompute.rotation, 0.3)
     }
-    return this.closedFist
+    return this.PinchingStatus
   }
 }

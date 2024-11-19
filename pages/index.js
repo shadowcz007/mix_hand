@@ -111,8 +111,8 @@ const Home = () => {
 
       //每一帧动画的数据
       ScenesManager.renderer.setAnimationLoop(() => {
-        const closedFist = handControlsRef.current.animate()
-        ScenesManager.render(closedFist)
+        const PinchingStatus = handControlsRef.current.animate()
+        ScenesManager.render(PinchingStatus)
         const { position } = handControlsRef.current.getScreenPoint()
         // console.log('screenPoint2D:', handControlsRef.current.getScreenPoint())
         if (position && position.x) {
@@ -127,8 +127,14 @@ const Home = () => {
             handControlsRef.current.hitTheTarget = true
           } else {
             handControlsRef.current.hitTheTarget = false
-            handControlsRef.current.closedFist = false
+            handControlsRef.current.PinchingStatus = false
           }
+
+          // Determine the direction of screenPoint
+          const direction = checkScreenDirection(position, centerX, centerY, 50) // Added threshold of 50
+          console.log('Direction:', direction)
+          // 检查拇指尖的移动方向
+          handControlsRef.current.checkDirection(direction)
         }
       })
 
@@ -182,15 +188,6 @@ const Home = () => {
         })
         .on('change', ev => {
           handControlsRef.current.handLandmarkY = ev.value
-        })
-
-      pane
-        .addBinding(PARAMS, 'handLandmarkY', {
-          min: 0,
-          max: Math.min(centerX, centerY)
-        })
-        .on('change', ev => {
-          drawCircle(ev.value)
         })
 
       pane
@@ -272,6 +269,27 @@ const Home = () => {
     if (paneRef.current) {
       paneRef.current.hidden = !paneRef.current.hidden
       setPaneVisible(!paneVisible)
+    }
+  }
+
+  // Function to check the direction of screenPoint relative to centerX and centerY with a threshold
+  const checkScreenDirection = (screenPoint, centerX, centerY, threshold) => {
+    const { x, y } = screenPoint
+    const dx = x - centerX
+    const dy = y - centerY
+    if (Math.sqrt(dx * dx + dy * dy) < threshold) {
+      return 'center'
+    }
+    if (y < centerY && Math.abs(y - centerY) > Math.abs(x - centerX)) {
+      return 'up'
+    } else if (y > centerY && Math.abs(y - centerY) > Math.abs(x - centerX)) {
+      return 'down'
+    } else if (x < centerX && Math.abs(x - centerX) > Math.abs(y - centerY)) {
+      return 'left'
+    } else if (x > centerX && Math.abs(x - centerX) > Math.abs(y - centerY)) {
+      return 'right'
+    } else {
+      return 'center'
     }
   }
 

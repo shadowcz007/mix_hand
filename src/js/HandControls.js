@@ -168,7 +168,7 @@ export class HandControls extends THREE.EventDispatcher {
       const thumbTip = getPosition(landmarks.multiHandLandmarks[0][4])
       const indexTip = getPosition(landmarks.multiHandLandmarks[0][8])
       // 检查是否在捏合
-      this.checkPinching(thumbTip, indexTip)
+      // this.checkPinching(thumbTip, indexTip)
 
       // 计算拇指尖和食指尖的中点
       this.screenPoint3D = new THREE.Vector3()
@@ -180,7 +180,7 @@ export class HandControls extends THREE.EventDispatcher {
         matrixWorld: new THREE.Matrix4().setPosition(this.screenPoint3D)
       })
     } else {
-      this.notPinching()
+      this.toInit = true
     }
   }
 
@@ -192,19 +192,25 @@ export class HandControls extends THREE.EventDispatcher {
         this.currentDirection = newDirection
         this.directionStartTime = Date.now()
       } else {
+        console.log(
+          'Direction:',
+          this.currentDirection,
+          this.target.rotation.x,
+          this.target.rotation.y
+        )
         switch (this.currentDirection) {
           case 'right':
-            if (this.target.rotation.y < 2) this.target.rotation.y += 0.01 // 向右旋转
+            if (this.target.rotation.y <= 2) this.target.rotation.y += 0.02 // 向右旋转
             break
           case 'left':
-            if (this.target.rotation.y > -1) this.target.rotation.y -= 0.01 // 向左旋转
+            if (this.target.rotation.y >= -2) this.target.rotation.y -= 0.02 // 向左旋转
             break
           case 'up':
             console.log('up', this.target.rotation.x)
-            if (this.target.rotation.x > -1) this.target.rotation.x -= 0.01 // 向上旋转
+            if (this.target.rotation.x >= -2) this.target.rotation.x -= 0.02 // 向上旋转
             break
           case 'down':
-            if (this.target.rotation.x < 1) this.target.rotation.x += 0.01 // 向下旋转
+            if (this.target.rotation.x <= 2) this.target.rotation.x += 0.02 // 向下旋转
             break
         }
       }
@@ -219,7 +225,7 @@ export class HandControls extends THREE.EventDispatcher {
 
     if (Date.now() - this.pinchingStartTime >= 200) {
       this.PinchingStatus = true
-      this.toInit = false
+      // this.toInit = false
     }
 
     if (this.pinchingTimeout) {
@@ -234,7 +240,7 @@ export class HandControls extends THREE.EventDispatcher {
       this.pinchingTimeout = setTimeout(() => {
         this.PinchingStatus = false
         this.pinchingTimeout = null
-        this.toInit = true
+        // this.toInit = true
       }, 1200)
     }
   }

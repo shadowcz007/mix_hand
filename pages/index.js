@@ -128,11 +128,12 @@ const Home = () => {
           } else {
             handControlsRef.current.hitTheTarget = false
             handControlsRef.current.PinchingStatus = false
+            handControlsRef.current.toInit= true
           }
 
           // Determine the direction of screenPoint
           const direction = checkScreenDirection(position, centerX, centerY, 50) // Added threshold of 50
-          console.log('Direction:', direction)
+          // console.log('Direction:', direction)
           screenPoint.innerText = direction
           // 检查拇指尖的移动方向
           handControlsRef.current.checkDirection(direction)

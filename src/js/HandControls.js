@@ -134,6 +134,10 @@ export class HandControls extends THREE.EventDispatcher {
     }
   }
 
+  getScreenPoint () {
+    return { pinching: this.closedFist, position: this.screenPoint2D }
+  }
+
   // 根据检测到的手部位置更新手部地标
   update (landmarks) {
     if (landmarks && landmarks.multiHandLandmarks.length === 1) {
@@ -156,16 +160,23 @@ export class HandControls extends THREE.EventDispatcher {
         }
       }
 
+      const thumbTip = getPosition(landmarks.multiHandLandmarks[0][4])
+      const indexTip = getPosition(landmarks.multiHandLandmarks[0][8])
       // 检查是否在捏合
-      this.checkPinching(
-        getPosition(landmarks.multiHandLandmarks[0][4]),
-        getPosition(landmarks.multiHandLandmarks[0][8])
-      )
+      this.checkPinching(thumbTip, indexTip)
 
       // 检查拇指尖的移动方向
-      this.checkThumbTipDirection(
-        getPosition(landmarks.multiHandLandmarks[0][4])
-      )
+      this.checkThumbTipDirection(thumbTip)
+
+      // 计算拇指尖和食指尖的中点
+      this.screenPoint3D = new THREE.Vector3()
+        .addVectors(thumbTip, indexTip)
+        .multiplyScalar(0.5)
+
+      // 将 screenPoint3D 转换为屏幕坐标
+      this.screenPoint2D = this.to2D({
+        matrixWorld: new THREE.Matrix4().setPosition(this.screenPoint3D)
+      })
     } else {
       this.notPinching()
     }
@@ -173,7 +184,7 @@ export class HandControls extends THREE.EventDispatcher {
 
   // 检查拇指尖的移动方向
   checkThumbTipDirection (thumbTip) {
-    if (this.previousThumbTipPosition) {
+    if (this.previousThumbTipPosition && this.closedFist) {
       const deltaX = thumbTip.x - this.previousThumbTipPosition.x
       const deltaY = thumbTip.y - this.previousThumbTipPosition.y
       let newDirection = null
@@ -244,7 +255,7 @@ export class HandControls extends THREE.EventDispatcher {
   }
 
   // 检查是否在捏合
-  checkPinching (thumbTip, indexTip, threshold = 0.5) {
+  checkPinching (thumbTip, indexTip, threshold = 0.5, canMoved = false) {
     // 计算欧几里得距离
     const distance = thumbTip.distanceTo(indexTip)
 
@@ -255,7 +266,7 @@ export class HandControls extends THREE.EventDispatcher {
       this.notPinching()
     }
 
-    if (this.closedFist) {
+    if (this.closedFist && canMoved) {
       this.smoothTransitionToPosition(this.target.position, thumbTip)
     }
 

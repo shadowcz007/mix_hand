@@ -16,6 +16,7 @@ const Home = () => {
   useEffect(() => {
     const enableWebcamButton = document.getElementById('webcamButton')
     const videoElement = document.getElementById('inputVideo')
+    const screenPoint = document.getElementById('screenPoint')
 
     let mediaPipeHands
 
@@ -69,7 +70,7 @@ const Home = () => {
     //   objects.push(_object)
     // }
 
-    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb';
+    const modelPath = '/objects/ferrari_550_barchetta_2000_azzurro_hyperion.glb'
     handControlsRef.current = new HandControls(
       cursor,
       objects,
@@ -80,9 +81,16 @@ const Home = () => {
       modelPath
     )
 
+    //每一帧动画的数据
     ScenesManager.renderer.setAnimationLoop(() => {
-      const closedFist=handControlsRef.current.animate()
+      const closedFist = handControlsRef.current.animate()
       ScenesManager.render(closedFist)
+      const { position } = handControlsRef.current.getScreenPoint()
+      console.log('screenPoint2D:', handControlsRef.current.getScreenPoint())
+      if (position && position.x) {
+        screenPoint.style.left = position.x + 'px'
+        screenPoint.style.top = position.y + 'px'
+      }
     })
 
     const paneContainer = document.getElementById('pane-container')
@@ -97,7 +105,7 @@ const Home = () => {
       positionY: 0,
       positionZ: 0,
       resetPositionAndRotation: () => {
-        handControlsRef.current.resetPositionAndRotation();
+        handControlsRef.current.resetPositionAndRotation()
       }
     }
     pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {
@@ -121,29 +129,41 @@ const Home = () => {
       }
     })
 
-    pane.addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI }).on('change', ev => {
-      setRotation(prev => ({ ...prev, x: ev.value }))
-    })
-    pane.addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI }).on('change', ev => {
-      setRotation(prev => ({ ...prev, y: ev.value }))
-    })
-    pane.addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI }).on('change', ev => {
-      setRotation(prev => ({ ...prev, z: ev.value }))
-    })
+    pane
+      .addBinding(PARAMS, 'rotationX', { min: -Math.PI, max: Math.PI })
+      .on('change', ev => {
+        setRotation(prev => ({ ...prev, x: ev.value }))
+      })
+    pane
+      .addBinding(PARAMS, 'rotationY', { min: -Math.PI, max: Math.PI })
+      .on('change', ev => {
+        setRotation(prev => ({ ...prev, y: ev.value }))
+      })
+    pane
+      .addBinding(PARAMS, 'rotationZ', { min: -Math.PI, max: Math.PI })
+      .on('change', ev => {
+        setRotation(prev => ({ ...prev, z: ev.value }))
+      })
 
-    pane.addBinding(PARAMS, 'positionX', { min: -5, max: 5 }).on('change', ev => {
-      setPosition(prev => ({ ...prev, x: ev.value }))
-    })
-    pane.addBinding(PARAMS, 'positionY', { min: -5, max: 5 }).on('change', ev => {
-      setPosition(prev => ({ ...prev, y: ev.value }))
-    })
-    pane.addBinding(PARAMS, 'positionZ', { min: -5, max: 5 }).on('change', ev => {
-      setPosition(prev => ({ ...prev, z: ev.value }))
-    })
+    pane
+      .addBinding(PARAMS, 'positionX', { min: -5, max: 5 })
+      .on('change', ev => {
+        setPosition(prev => ({ ...prev, x: ev.value }))
+      })
+    pane
+      .addBinding(PARAMS, 'positionY', { min: -5, max: 5 })
+      .on('change', ev => {
+        setPosition(prev => ({ ...prev, y: ev.value }))
+      })
+    pane
+      .addBinding(PARAMS, 'positionZ', { min: -5, max: 5 })
+      .on('change', ev => {
+        setPosition(prev => ({ ...prev, z: ev.value }))
+      })
 
     pane.addButton({ title: 'Reset Position and Rotation' }).on('click', () => {
-      PARAMS.resetPositionAndRotation();
-    });
+      PARAMS.resetPositionAndRotation()
+    })
 
     handControlsRef.current.addEventListener('drag_start', event => {
       event.object.material.opacity = 0.4
@@ -166,10 +186,18 @@ const Home = () => {
   }, [])
 
   useEffect(() => {
-    console.log('###change', position, rotation, handControlsRef.current)
+    // console.log('###change', position, rotation, handControlsRef.current)
     if (handControlsRef.current) {
-      handControlsRef.current.target.rotation.set(rotation.x, rotation.y, rotation.z)
-      handControlsRef.current.target.position.set(position.x, position.y, position.z)
+      handControlsRef.current.target.rotation.set(
+        rotation.x,
+        rotation.y,
+        rotation.z
+      )
+      handControlsRef.current.target.position.set(
+        position.x,
+        position.y,
+        position.z
+      )
     }
   }, [rotation, position])
 
@@ -187,6 +215,9 @@ const Home = () => {
       <video id='inputVideo' playsInline autoPlay muted></video>
       <button id='webcamButton'>CLICK TO ENABLE WEBCAM</button>
       <div id='pane-container'></div>
+      <div id='screenPoint' style={{ position: 'fixed' }}>
+        POINT
+      </div>
       <Script src='/js/lib/camera_utils.js' strategy='beforeInteractive' />
       <Script src='/js/lib/hands.js' strategy='beforeInteractive' />
       <Script

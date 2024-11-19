@@ -97,7 +97,7 @@ const Home = () => {
       positionY: 0,
       positionZ: 0,
       resetPositionAndRotation: () => {
-        handControlsRef.current.smoothTransitionToInitialPosition();
+        handControlsRef.current.resetPositionAndRotation();
       }
     }
     pane.addBinding(PARAMS, 'showLandmark').on('change', ev => {

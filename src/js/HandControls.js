@@ -343,6 +343,10 @@ export class HandControls extends THREE.EventDispatcher {
     )
   }
 
+  resetPositionAndRotation () {
+    this.toInit = true
+  }
+
   // 动画手部控制
   animate () {
     if (!this.target) return
@@ -384,5 +388,4 @@ export class HandControls extends THREE.EventDispatcher {
     }
     return this.closedFist
   }
-
 }

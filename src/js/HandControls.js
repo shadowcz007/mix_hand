@@ -191,10 +191,7 @@ export class HandControls extends THREE.EventDispatcher {
       if (newDirection !== this.currentDirection) {
         this.currentDirection = newDirection
         this.directionStartTime = Date.now()
-      } else if (Date.now() - this.directionStartTime > 100) {
-        const elapsedTime = (Date.now() - this.directionStartTime) / 1000
-        const easing = t => t * t * (3 - 2 * t) // 使用缓动函数
-
+      } else {
         switch (this.currentDirection) {
           case 'right':
             if (this.target.rotation.y < 2) this.target.rotation.y += 0.01 // 向右旋转

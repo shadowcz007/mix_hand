@@ -133,6 +133,7 @@ const Home = () => {
           // Determine the direction of screenPoint
           const direction = checkScreenDirection(position, centerX, centerY, 50) // Added threshold of 50
           console.log('Direction:', direction)
+          screenPoint.innerText = direction
           // 检查拇指尖的移动方向
           handControlsRef.current.checkDirection(direction)
         }
@@ -277,6 +278,7 @@ const Home = () => {
     const { x, y } = screenPoint
     const dx = x - centerX
     const dy = y - centerY
+
     if (Math.sqrt(dx * dx + dy * dy) < threshold) {
       return 'center'
     }
@@ -310,7 +312,7 @@ const Home = () => {
         {paneVisible ? 'Hide Pane' : 'Show Pane'}
       </button>
       <div id='pane-container'></div>
-      <div id='screenPoint' style={{ position: 'fixed' }}>
+      <div id='screenPoint' className="glowing-dot">
         POINT
       </div>
       <canvas

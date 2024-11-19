@@ -35,3 +35,18 @@ html, body {
 .tp-dfwv {
   width: 350px !important;
 }
+
+
+.glowing-dot {
+  width: 20px;
+  height: 20px;
+  background-color: rgba(255, 255, 255, 0.8); /* 白色背景，带透明度 */
+  border-radius: 50%; /* 圆形 */
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7), /* 内层发光 */
+              0 0 20px rgba(255, 255, 255, 0.5), /* 中层发光 */
+              0 0 30px rgba(255, 255, 255, 0.3); /* 外层发光 */
+  position: absolute; /* 绝对定位 */
+  top: 50%; /* 垂直居中 */
+  left: 50%; /* 水平居中 */
+  transform: translate(-50%, -50%); /* 使其完全居中 */
+}

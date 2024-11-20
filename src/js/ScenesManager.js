@@ -146,7 +146,7 @@ export class ScenesManager {
       colors[i * 3 + 2] = color.b
 
       // Initialize sizes
-      sizes[i] = 1.05
+      sizes[i] = 100
     }
 
     particles.setAttribute('position', new Float32BufferAttribute(positions, 3))
@@ -154,7 +154,7 @@ export class ScenesManager {
     particles.setAttribute('size', new Float32BufferAttribute(sizes, 1))
 
     const particleMaterial = new PointsMaterial({
-      size: 0.05,
+      size: 0.15,
       vertexColors: true,
       transparent: true,
       opacity: 0.8

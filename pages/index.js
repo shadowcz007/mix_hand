@@ -146,7 +146,9 @@ const Home = () => {
           // Determine the direction of screenPoint
           const direction = checkScreenDirection(position, centerX, centerY, 50) // Added threshold of 50
           // console.log('Direction:', direction)
-          screenPoint.innerText = direction
+          // screenPoint.innerText = direction
+          //todo css 
+          
           // 检查拇指尖的移动方向
           handControlsRef.current.checkDirection(direction)
         }
@@ -418,7 +420,7 @@ const Home = () => {
       </button>
       <div id='pane-container'></div>
       <div id='screenPoint' className='glowing-dot'>
-        POINT
+        
       </div>
       <canvas
         ref={canvasRef}

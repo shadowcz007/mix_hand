@@ -114,8 +114,8 @@ const Home = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.beginPath()
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
-        ctx.strokeStyle = 'red'
-        ctx.lineWidth = 2
+        ctx.strokeStyle = 'white'
+        ctx.lineWidth = 1
         ctx.stroke()
       }
 

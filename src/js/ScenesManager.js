@@ -128,20 +128,30 @@ export class ScenesManager {
     const particleCount = 1000 // 增加粒子数量
     const positions = new Float32Array(particleCount * 3)
     const colors = new Float32Array(particleCount * 3) // 添加颜色数组
+    const sizes = new Float32Array(particleCount) // 添加大小数组
+
+    // Define gradient colors
+    const startColor = new Color(0x1e90ff) // DodgerBlue
+    const endColor = new Color(0x87cefa) // LightSkyBlue
 
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 10
       positions[i * 3 + 1] = (Math.random() - 0.5) * 10
       positions[i * 3 + 2] = (Math.random() - 0.5) * 10
 
-      // 添加随机颜色
-      colors[i * 3] = Math.random()
-      colors[i * 3 + 1] = Math.random()
-      colors[i * 3 + 2] = Math.random()
+      // Calculate gradient color
+      const color = startColor.clone().lerp(endColor, i / particleCount)
+      colors[i * 3] = color.r
+      colors[i * 3 + 1] = color.g
+      colors[i * 3 + 2] = color.b
+
+      // Initialize sizes
+      sizes[i] = 1.05
     }
 
     particles.setAttribute('position', new Float32BufferAttribute(positions, 3))
     particles.setAttribute('color', new Float32BufferAttribute(colors, 3))
+    particles.setAttribute('size', new Float32BufferAttribute(sizes, 1))
 
     const particleMaterial = new PointsMaterial({
       size: 0.05,
@@ -162,13 +172,19 @@ export class ScenesManager {
     const time = Date.now() * 0.001
     const positions =
       ScenesManager.particleSystem.geometry.attributes.position.array
+    const sizes =
+      ScenesManager.particleSystem.geometry.attributes.size.array
 
     for (let i = 0; i < positions.length; i += 3) {
       positions[i + 1] += Math.sin(time + positions[i]) * 0.01
       positions[i] += Math.cos(time + positions[i + 2]) * 0.01
+
+      // Implement wave-like size variation
+      sizes[i / 3] = 0.05 + 0.02 * Math.sin(time + i / 3)
     }
 
     ScenesManager.particleSystem.geometry.attributes.position.needsUpdate = true
+    ScenesManager.particleSystem.geometry.attributes.size.needsUpdate = true
   }
   // Save camera position and rotation to local storage
   static saveCameraState () {

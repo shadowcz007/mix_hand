@@ -168,7 +168,7 @@ export class HandControls extends THREE.EventDispatcher {
       const thumbTip = getPosition(landmarks.multiHandLandmarks[0][4])
       const indexTip = getPosition(landmarks.multiHandLandmarks[0][8])
       // 检查是否在捏合
-      // this.checkPinching(thumbTip, indexTip)
+      this.checkPinching(thumbTip, indexTip)
 
       // 计算拇指尖和食指尖的中点
       this.screenPoint3D = new THREE.Vector3()
@@ -257,28 +257,11 @@ export class HandControls extends THREE.EventDispatcher {
       this.notPinching()
     }
 
-    if (this.PinchingStatus && canMoved && this.hitTheTarget) {
-      this.smoothTransitionToPosition(this.target.position, thumbTip)
-    }
+    // if (this.PinchingStatus && canMoved && this.hitTheTarget) {
+    //   this.smoothTransitionToPosition(this.target.position, thumbTip)
+    // }
 
-    if (!this.PinchingStatus) {
-      this.dispatchEvent({
-        type: 'closed_fist'
-      })
-
-      this.dispatchEvent({
-        type: 'drag_end',
-        object: this.selected,
-        callback: () => {
-          this.selected = null
-        }
-      })
-    } else {
-      this.selected = null
-      this.dispatchEvent({
-        type: 'opened_fist'
-      })
-    }
+    this.PinchingStatus
   }
 
   // 平滑过渡到目标位置

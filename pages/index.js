@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import Head from 'next/head'
 import Script from 'next/script'
-import * as THREE from '../public/js/lib/three.module.js'
+import * as THREE from 'three'
 import { Pane } from '../public/js/lib/tweakpane.min.js'
 import { ScenesManager } from '../src/js/ScenesManager'
 import { HandControls } from '../src/js/HandControls'
@@ -322,11 +322,6 @@ const Home = () => {
       ></canvas>
       <Script src='/js/lib/camera_utils.js' strategy='beforeInteractive' />
       <Script src='/js/lib/hands.js' strategy='beforeInteractive' />
-      <Script
-        type='module'
-        src='/js/lib/three.module.js'
-        strategy='beforeInteractive'
-      />
       <Script
         type='module'
         src='/js/lib/tweakpane.min.js'

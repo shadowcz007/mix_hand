@@ -1,5 +1,5 @@
-import * as THREE from '../../public/js/lib/three.module.js'
-import { GLTFLoader } from '../../public/js/lib/GLTFLoader.js'
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 // HandControls 类继承自 THREE.EventDispatcher，用于在 3D 场景中处理手部控制。
 export class HandControls extends THREE.EventDispatcher {

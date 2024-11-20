@@ -12,10 +12,15 @@ import {
   Points,
   PointsMaterial,
   BufferGeometry,
-  Float32BufferAttribute
-} from '../../public/js/lib/three.module.js'
+  Float32BufferAttribute,
+  Vector2
+} from 'three'
 
-import { OrbitControls } from '../../public/js/lib/OrbitControls.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // The ScenesManager class sets up and manages the 3D scene, camera, and renderer.
 export class ScenesManager {
@@ -113,24 +118,53 @@ export class ScenesManager {
     )
 
     // Create particle system
+    // 改进粒子系统
     const particles = new BufferGeometry()
-    const particleCount = 100
+    const particleCount = 1000 // 增加粒子数量
     const positions = new Float32Array(particleCount * 3)
+    const colors = new Float32Array(particleCount * 3) // 添加颜色数组
 
     for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() * 2 - 1) * 5
-      positions[i * 3 + 1] = (Math.random() * 2 - 1) * 5
-      positions[i * 3 + 2] = (Math.random() * 2 - 1) * 5
+      positions[i * 3] = (Math.random() - 0.5) * 10
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 10
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 10
+
+      // 添加随机颜色
+      colors[i * 3] = Math.random()
+      colors[i * 3 + 1] = Math.random()
+      colors[i * 3 + 2] = Math.random()
     }
 
     particles.setAttribute('position', new Float32BufferAttribute(positions, 3))
+    particles.setAttribute('color', new Float32BufferAttribute(colors, 3))
 
-    const particleMaterial = new PointsMaterial({ color: 0xffffff })
+    const particleMaterial = new PointsMaterial({
+      size: 0.05,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8
+    })
+
     ScenesManager.particleSystem = new Points(particles, particleMaterial)
     ScenesManager.scene.add(ScenesManager.particleSystem)
     ScenesManager.particleSystem.visible = false // Initially hide the particle system
-  }
 
+    // Call setupPostProcessing to initialize composer
+    ScenesManager.setupPostProcessing()
+  }
+  // 添加动画更新方法
+  static animateParticles () {
+    const time = Date.now() * 0.001
+    const positions =
+      ScenesManager.particleSystem.geometry.attributes.position.array
+
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i + 1] += Math.sin(time + positions[i]) * 0.01
+      positions[i] += Math.cos(time + positions[i + 2]) * 0.01
+    }
+
+    ScenesManager.particleSystem.geometry.attributes.position.needsUpdate = true
+  }
   // Save camera position and rotation to local storage
   static saveCameraState () {
     const cameraPosition = {
@@ -147,17 +181,32 @@ export class ScenesManager {
     localStorage.setItem('cameraRotation', JSON.stringify(cameraRotation))
   }
 
+  static setupPostProcessing () {
+    const renderPass = new RenderPass(ScenesManager.scene, ScenesManager.camera)
+
+    const bloomPass = new UnrealBloomPass(
+      new Vector2(window.innerWidth, window.innerHeight),
+      1.5, // 强度
+      0.4, // 半径
+      0.85 // 阈值
+    )
+
+    ScenesManager.composer = new EffectComposer(ScenesManager.renderer)
+    ScenesManager.composer.addPass(renderPass)
+    ScenesManager.composer.addPass(bloomPass)
+  }
   // Render the scene
-  static render (closedFist) {
+  static render (particleVisible) {
     ScenesManager.controls.update()
 
-    // Show or hide particle system based on  closedFist
-    if (closedFist) {
+    // Show or hide particle system based on  particleVisible
+    if (particleVisible) {
       ScenesManager.particleSystem.visible = true
+      ScenesManager.animateParticles() // 添加粒子动画
     } else {
       ScenesManager.particleSystem.visible = false
     }
 
-    ScenesManager.renderer.render(ScenesManager.scene, ScenesManager.camera)
+    ScenesManager.composer.render()
   }
 }

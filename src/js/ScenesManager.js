@@ -78,6 +78,8 @@ export class ScenesManager {
     ScenesManager.scene.add(ambLight)
     const dirLight = new DirectionalLight(0xffffff, 1)
     dirLight.position.set(-30, 30, 30)
+    dirLight.castShadow = true // Enable shadow casting for directional light
+    dirLight.name = 'dirLight'
     ScenesManager.scene.add(dirLight)
 
     const light = new SpotLight(0xffffff, 4.5)
@@ -90,6 +92,7 @@ export class ScenesManager {
     light.shadow.bias = -0.000222
     light.shadow.mapSize.width = 1024
     light.shadow.mapSize.height = 1024
+    light.name = 'spotLight' // Add name to the light for easy reference
     ScenesManager.scene.add(light)
 
     const axesHelper = new AxesHelper(5)
@@ -109,6 +112,8 @@ export class ScenesManager {
 
     // Instantiate HandControls
     const target = new Object3D()
+    target.castShadow = true // Enable shadow casting for the target object
+    target.receiveShadow = true // Enable shadow receiving for the target object
     ScenesManager.scene.add(target)
 
     // Save camera position and rotation to local storage on change
@@ -208,5 +213,16 @@ export class ScenesManager {
     }
 
     ScenesManager.composer.render()
+  }
+
+  // Method to enable/disable shadows
+  static setShadowEnabled (enabled) {
+    ScenesManager.renderer.shadowMap.enabled = enabled
+    ScenesManager.scene.traverse(object => {
+      if (object.isMesh) {
+        object.castShadow = enabled
+        object.receiveShadow = enabled
+      }
+    })
   }
 }

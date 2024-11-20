@@ -89,6 +89,18 @@ const Home = () => {
         positionX: 0,
         positionY: 0,
         positionZ: 0,
+        shadowEnabled: false, // New parameter for shadow
+
+        dirLightIntensity: 1, // New parameter for directional light intensity
+        dirLightPositionX: -30, // New parameter for directional light position X
+        dirLightPositionY: 30, // New parameter for directional light position Y
+        dirLightPositionZ: 30, // New parameter for directional light position Z
+
+        spotLightColor: '#ffffff', // New parameter for light color
+        spotLightIntensity: 4.5, // New parameter for spot light intensity
+        spotLightPositionX: 0, // New parameter for spot light position X
+        spotLightPositionY: 10, // New parameter for spot light position Y
+        spotLightPositionZ: 5, // New parameter for spot light position Z
         resetPositionAndRotation: () => {
           handControlsRef.current.resetPositionAndRotation()
         }
@@ -128,7 +140,7 @@ const Home = () => {
           } else {
             handControlsRef.current.hitTheTarget = false
             handControlsRef.current.PinchingStatus = false
-            handControlsRef.current.toInit= true
+            handControlsRef.current.toInit = true
           }
 
           // Determine the direction of screenPoint
@@ -224,6 +236,98 @@ const Home = () => {
           setPosition(prev => ({ ...prev, z: ev.value }))
         })
 
+      pane.addBinding(PARAMS, 'shadowEnabled').on('change', ev => {
+        ScenesManager.setShadowEnabled(ev.value)
+      })
+
+      pane
+        .addBinding(PARAMS, 'dirLightIntensity', { min: 0, max: 10 })
+        .on('change', ev => {
+          const dirLight = ScenesManager.scene.getObjectByName('dirLight')
+          if (dirLight) {
+            dirLight.intensity = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'dirLightPositionX', { min: -50, max: 50 })
+        .on('change', ev => {
+          const dirLight = ScenesManager.scene.getObjectByName('dirLight')
+          if (dirLight) {
+            dirLight.position.x = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'dirLightPositionY', { min: -50, max: 50 })
+        .on('change', ev => {
+          const dirLight = ScenesManager.scene.getObjectByName('dirLight')
+          if (dirLight) {
+            dirLight.position.y = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'dirLightPositionZ', { min: -50, max: 50 })
+        .on('change', ev => {
+          const dirLight = ScenesManager.scene.getObjectByName('dirLight')
+          if (dirLight) {
+            dirLight.position.z = ev.value
+          }
+        })
+
+      pane.addBinding(PARAMS, 'spotLightColor').on('change', ev => {
+        const spotLight = ScenesManager.scene.getObjectByName('spotLight')
+        if (spotLight) {
+          spotLight.color.set(ev.value)
+        }
+      })
+
+      pane
+        .addBinding(PARAMS, 'spotLightIntensity', { min: 0, max: 10 })
+        .on('change', ev => {
+          const spotLight = ScenesManager.scene.getObjectByName('spotLight')
+          if (spotLight) {
+            spotLight.intensity = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'spotLightIntensity', { min: 0, max: 10 })
+        .on('change', ev => {
+          const spotLight = ScenesManager.scene.getObjectByName('spotLight')
+          if (spotLight) {
+            spotLight.intensity = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'spotLightPositionX', { min: -50, max: 50 })
+        .on('change', ev => {
+          const spotLight = ScenesManager.scene.getObjectByName('spotLight')
+          if (spotLight) {
+            spotLight.position.x = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'spotLightPositionY', { min: -50, max: 50 })
+        .on('change', ev => {
+          const spotLight = ScenesManager.scene.getObjectByName('spotLight')
+          if (spotLight) {
+            spotLight.position.y = ev.value
+          }
+        })
+
+      pane
+        .addBinding(PARAMS, 'spotLightPositionZ', { min: -50, max: 50 })
+        .on('change', ev => {
+          const spotLight = ScenesManager.scene.getObjectByName('spotLight')
+          if (spotLight) {
+            spotLight.position.z = ev.value
+          }
+        })
+
       pane
         .addButton({ title: 'Reset Position and Rotation' })
         .on('click', () => {
@@ -313,7 +417,7 @@ const Home = () => {
         {paneVisible ? 'Hide Pane' : 'Show Pane'}
       </button>
       <div id='pane-container'></div>
-      <div id='screenPoint' className="glowing-dot">
+      <div id='screenPoint' className='glowing-dot'>
         POINT
       </div>
       <canvas
